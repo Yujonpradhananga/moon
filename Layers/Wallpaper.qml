@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-
+import qs.Components as Comp
 import qs.Data as Dat
 import qs.Widgets as Wid
 
@@ -59,11 +59,10 @@ WlrLayershell {
   }
 
   // Side menu
-  Wid.SideMenu {
-    id: sideMenu
-
-    anchors.bottom: parent.bottom
-    anchors.left: parent.left
-    anchors.top: parent.top
-  }
+Comp.SideMenu {
+  id: sideMenu
+  anchors.bottom: parent.bottom
+  anchors.left: parent.left
+  anchors.top: parent.top
+}
 }
