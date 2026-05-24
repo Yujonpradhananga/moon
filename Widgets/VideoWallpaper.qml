@@ -14,8 +14,8 @@ Item {
 
   // Dead zone: the center portion of the screen where no panning occurs.
   // edgeZone = 0.20 means the outer 20% on each side triggers panning.
-  readonly property real edgeZone: 0.20
-
+  readonly property real edgeZone: 0.15
+  property real storedParallaxX: 0
   // Parallax offset with dead zone:
   // mouseX in [0, edgeZone]         → pan left  (shift goes from +max to 0)
   // mouseX in [edgeZone, 1-edgeZone] → dead zone (shift = 0)

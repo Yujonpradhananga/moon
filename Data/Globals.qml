@@ -11,6 +11,7 @@ Singleton {
   // Whether the side menu should be revealed
   readonly property bool menuOpen: mouseX < menuTriggerThreshold
 
+
   // How far left the mouse must go to trigger menu (fraction of screen width)
   readonly property real menuTriggerThreshold: 0.10
 
