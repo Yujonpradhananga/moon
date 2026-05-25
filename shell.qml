@@ -12,7 +12,6 @@ ShellRoot {
     Scope {
       id: scopeRoot
       required property ShellScreen modelData
-
       Lay.Wallpaper {
         modelData: scopeRoot.modelData
       }

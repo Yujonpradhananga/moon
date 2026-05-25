@@ -12,8 +12,10 @@ ToggleRow {
   onClicked: {
     toggled = !toggled;
     if (toggled)
-      Quickshell.execDetached(["bash", "-c", "hyprctl keyword decoration:screen_shader ~/.config/hypr/shaders/nightlight.glsl"]);
+      Quickshell.execDetached(["hyprctl", "keyword", "decoration:screen_shader",
+        "/home/yujon/.config/hypr/Shaders/bluelight.frag"]);
     else
-      Quickshell.execDetached(["bash", "-c", "hyprctl keyword decoration:screen_shader ''"]);
+      Quickshell.execDetached(["hyprctl", "keyword", "decoration:screen_shader",
+        "/home/yujon/.config/hypr/Shaders/vibrant.glsl"]);
   }
 }
