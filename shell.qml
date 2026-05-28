@@ -21,7 +21,9 @@ ShellRoot {
       Comp.SideMenu {
         parent: scopeRoot
       }
-
+      Lay.Cava {
+        modelData: scopeRoot.modelData
+      }
       Connections {
         function onReloadCompleted() {
           Quickshell.inhibitReloadPopup();
