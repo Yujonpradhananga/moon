@@ -37,13 +37,16 @@ WlrLayershell {
       }
     }
   }
+  Wid.WallpaperEngine {
+      anchors.fill: parent
+  }
 
-  // Video wallpaper with parallax
-  Wid.VideoWallpaper {
+ /* Wid.VideoWallpaper {
     id: wallpaper
 
     anchors.fill: parent
-  }
+  } */
+ 
 
   // Dim overlay that intensifies when menu opens — gives a cinematic feel
   Rectangle {

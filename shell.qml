@@ -5,16 +5,19 @@ import Quickshell
 import QtQuick
 import qs.Layers as Lay
 import qs.Components as Comp
-
+import qs.Widgets as Wid
 ShellRoot {
   Variants {
     model: Quickshell.screens
     Scope {
       id: scopeRoot
       required property ShellScreen modelData
-      Lay.Wallpaper {
+      Wid.WallpaperEngine {
+              modelData: scopeRoot.modelData
+            }
+      /*Lay.Wallpaper {
         modelData: scopeRoot.modelData
-      }
+      } */
       Lay.PowerScreen {
         modelData: scopeRoot.modelData
       }
