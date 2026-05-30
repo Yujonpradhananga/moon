@@ -1,7 +1,6 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import qs.Components as Comp
 import qs.Data as Dat
 import qs.Widgets as Wid
 import qs.Layers as Lay
@@ -22,33 +21,11 @@ WlrLayershell {
   namespace: "moon.wallpaper"
   screen: modelData
 
-  // Full-screen mouse tracker for parallax + menu trigger
-  MouseArea {
-    id: mouseTracker
-
-    anchors.fill: parent
-    acceptedButtons: Qt.NoButton
-    hoverEnabled: true
-    propagateComposedEvents: true
-
-    onPositionChanged: mouse => {
-      if (layerRoot.width > 0) {
-        Dat.Globals.mouseX = mouse.x / layerRoot.width;
-      }
-    }
-  }
   Wid.WallpaperEngine {
-      anchors.fill: parent
+    anchors.fill: parent
   }
 
- /* Wid.VideoWallpaper {
-    id: wallpaper
-
-    anchors.fill: parent
-  } */
- 
-
-  // Dim overlay that intensifies when menu opens — gives a cinematic feel
+  // Dim overlay that intensifies when menu opens
   Rectangle {
     anchors.fill: parent
     color: Dat.Colors.scrim
@@ -61,22 +38,16 @@ WlrLayershell {
       }
     }
   }
-Lay.LunarClockFace {
-  x: 40
-  y: 40
 
-  Behavior on x {
-    NumberAnimation {
-      duration: Dat.Easing.emphasizedTime
-      easing.bezierCurve: Dat.Easing.emphasized
+  Lay.LunarClockFace {
+    x: 40
+    y: 40
+
+    Behavior on x {
+      NumberAnimation {
+        duration: Dat.Easing.emphasizedTime
+        easing.bezierCurve: Dat.Easing.emphasized
+      }
     }
   }
-}
-  // Side menu
-Comp.SideMenu {
-  id: sideMenu
-  anchors.bottom: parent.bottom
-  anchors.left: parent.left
-  anchors.top: parent.top
-}
 }

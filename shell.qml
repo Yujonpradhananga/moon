@@ -4,29 +4,39 @@ pragma ComponentBehavior: Bound
 import Quickshell
 import QtQuick
 import qs.Layers as Lay
-import qs.Components as Comp
-import qs.Widgets as Wid
+
 ShellRoot {
   Variants {
     model: Quickshell.screens
     Scope {
       id: scopeRoot
       required property ShellScreen modelData
-      Wid.WallpaperEngine {
-              modelData: scopeRoot.modelData
-            }
-      /*Lay.Wallpaper {
+
+      // Mouse tracker — feeds Globals.mouseX for all components
+      Lay.MouseTracker {
         modelData: scopeRoot.modelData
-      } */
+      }
+
+      // Wallpaper — rendering only (WallpaperEngine + dim + clock)
+      Lay.Wallpaper {
+        modelData: scopeRoot.modelData
+      }
+
+      // Side panel — modular, triggers via Globals.mouseX
+      Lay.SidePanel {
+        modelData: scopeRoot.modelData
+      }
+
+      // Power screen overlay
       Lay.PowerScreen {
         modelData: scopeRoot.modelData
       }
-      Comp.SideMenu {
-        parent: scopeRoot
-      }
+
+      // Cava visualizer
       Lay.Cava {
         modelData: scopeRoot.modelData
       }
+
       Connections {
         function onReloadCompleted() {
           Quickshell.inhibitReloadPopup();
