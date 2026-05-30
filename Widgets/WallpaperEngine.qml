@@ -36,15 +36,58 @@ WlrLayershell {
         visible: false
     }
 
+    // Canvas paints the mouse trail as a fading white glow
+    Canvas {
+        id: trailCanvas
+        anchors.fill: parent
+        visible: false
+
+        property var points: []  // recent mouse positions [{x, y, age}]
+
+        function addPoint(x, y) {
+            points.push({ x: x, y: y, age: 0.0 })
+            if (points.length > 40) points.shift()  // keep last 40 points
+        }
+
+        function tick(dt) {
+            // Age all points
+            for (let i = points.length - 1; i >= 0; i--) {
+                points[i].age += dt
+                if (points[i].age > 1.0) points.splice(i, 1)  // remove old ones
+            }
+            requestPaint()
+        }
+
+        onPaint: {
+            const ctx = getContext("2d")
+            // Fade the whole canvas each frame instead of clearing — creates trail smear
+            ctx.fillStyle = "rgba(0, 0, 0, 0.12)"
+            ctx.fillRect(0, 0, width, height)
+
+            for (let p of points) {
+                const alpha = (1.0 - p.age) * 0.9
+                const radius = 18 + p.age * 30  // expands as it fades
+                const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius)
+                grad.addColorStop(0, `rgba(255, 255, 255, ${alpha})`)
+                grad.addColorStop(1, "rgba(255, 255, 255, 0)")
+                ctx.fillStyle = grad
+                ctx.beginPath()
+                ctx.arc(p.x, p.y, radius, 0, Math.PI * 2)
+                ctx.fill()
+            }
+        }
+    }
+
     ShaderEffect {
         id: shader
         anchors.fill: parent
         property variant source: wallpaperImage
         property variant normalMapSource: normalMap
+        property variant trailMap: trailCanvas
         property real time: 0
-        property real rippleStrength: 0.1
-        property real rippleX: 0.2
-        property real rippleY: 0.2
+        property real rippleStrength: 0.5
+        property real rippleX: 0.5
+        property real rippleY: 0.5
         property real rippleAge: 999.0
 
         NumberAnimation on time {
@@ -59,7 +102,7 @@ WlrLayershell {
             interval: 16
             running: true
             repeat: true
-            onTriggered: shader.rippleAge += 0.016
+            onTriggered: trailCanvas.tick(0.016)
         }
 
         vertexShader: "file:///home/yujon/Projects/quickshell/moon/Assets/mahoraga/waterripple.vert.qsb"
@@ -69,12 +112,10 @@ WlrLayershell {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
-        acceptedButtons: Qt.NoButton  // don't capture clicks, just track position
+        acceptedButtons: Qt.NoButton
 
         onPositionChanged: (mouse) => {
-            shader.rippleX = mouse.x / width
-            shader.rippleY = mouse.y / height
-            shader.rippleAge = 0.0
+            trailCanvas.addPoint(mouse.x, mouse.y)
         }
     }
 }
