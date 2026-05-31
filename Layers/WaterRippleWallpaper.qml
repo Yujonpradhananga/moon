@@ -12,7 +12,7 @@ ShellWindow {
     anchors { top: true; bottom: true; left: true; right: true }
 
     // ── Asset paths – adjust to your actual asset directory ─────────────────
-    readonly property string assetDir: Qt.resolvedUrl("Assets/mahoraga/")
+    readonly property string assetDir: Qt.resolvedUrl("../Assets/")
     readonly property string baseImage:   assetDir + "base.jpg"
     readonly property string normalImage: assetDir + "waterripplenormal.png"
 

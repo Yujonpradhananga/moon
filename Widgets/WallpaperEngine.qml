@@ -33,7 +33,7 @@ WlrLayershell {
 
     Image {
         id: img_depth
-        source: Qt.resolvedUrl("../Assets/mahoraga/moondepth.png")
+        source: Qt.resolvedUrl("../Assets/moondepth.png")
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
         smooth: true; visible: false
@@ -41,7 +41,7 @@ WlrLayershell {
 
     Image {
         id: img_circles
-        source: Qt.resolvedUrl("../Assets/mahoraga/circle.png")
+        source: Qt.resolvedUrl("../Assets/circle.png")
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
         smooth: true; visible: false
@@ -49,7 +49,7 @@ WlrLayershell {
 
     Image {
         id: img_normal
-        source: Qt.resolvedUrl("../Assets/mahoraga/waterripplenormal.png")
+        source: Qt.resolvedUrl("../Assets/waterripplenormal.png")
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
         smooth: true; visible: false
@@ -61,7 +61,7 @@ WlrLayershell {
 
     Image {
         id: s1_moon
-        source: Qt.resolvedUrl("../Assets/mahoraga/moon.png")
+        source: Qt.resolvedUrl("../Assets/moon.png")
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
         smooth: true
@@ -95,8 +95,8 @@ WlrLayershell {
         property real parallaxStrength: 0.30
         property real aspectRatio:      width / height
 
-        vertexShader:   Qt.resolvedUrl("../Assets/mahoraga/parallax.vert.qsb")
-        fragmentShader: Qt.resolvedUrl("../Assets/mahoraga/parallax.frag.qsb")
+        vertexShader:   Qt.resolvedUrl("../Assets/shaders/parallax/parallax.vert.qsb")
+        fragmentShader: Qt.resolvedUrl("../Assets/shaders/parallax/parallax.frag.qsb")
     }
 
     ShaderEffectSource {
@@ -130,8 +130,8 @@ WlrLayershell {
             loops: Animation.Infinite; running: true
         }
 
-        vertexShader:   Qt.resolvedUrl("../Assets/mahoraga/motion.vert.qsb")
-        fragmentShader: Qt.resolvedUrl("../Assets/mahoraga/motion.frag.qsb")
+        vertexShader:   Qt.resolvedUrl("../Assets/shaders/motion/motion.vert.qsb")
+        fragmentShader: Qt.resolvedUrl("../Assets/shaders/motion/motion.frag.qsb")
     }
 
     ShaderEffect {
@@ -154,8 +154,8 @@ WlrLayershell {
             loops: Animation.Infinite; running: true
         }
 
-        vertexShader:   Qt.resolvedUrl("../Assets/mahoraga/waterripple.vert.qsb")
-        fragmentShader: Qt.resolvedUrl("../Assets/mahoraga/waterripple.frag.qsb")
+        vertexShader:   Qt.resolvedUrl("../Assets/shaders/waterripple/waterripple.vert.qsb")
+        fragmentShader: Qt.resolvedUrl("../Assets/shaders/waterripple/waterripple.frag.qsb")
     }
 
     ShaderEffectSource {
@@ -190,8 +190,8 @@ WlrLayershell {
             loops: Animation.Infinite; running: true
         }
 
-        vertexShader:   Qt.resolvedUrl("../Assets/mahoraga/waterripple.vert.qsb")
-        fragmentShader: Qt.resolvedUrl("../Assets/mahoraga/circles.frag.qsb")
+        vertexShader:   Qt.resolvedUrl("../Assets/shaders/waterripple/waterripple.vert.qsb")
+        fragmentShader: Qt.resolvedUrl("../Assets/shaders/circle/circles.frag.qsb")
     }
 
     ShaderEffectSource {
@@ -278,8 +278,8 @@ WlrLayershell {
             loops: Animation.Infinite; running: true
         }
 
-        vertexShader:   Qt.resolvedUrl("../Assets/mahoraga/waterripple.vert.qsb")
-        fragmentShader: Qt.resolvedUrl("../Assets/mahoraga/waterripple.frag.qsb")
+        vertexShader:   Qt.resolvedUrl("../Assets/shaders/waterripple/waterripple.vert.qsb")
+        fragmentShader: Qt.resolvedUrl("../Assets/shaders/waterripple/waterripple.frag.qsb")
     }
 
     // ─────────────────────────────────────────────────────────────────────────

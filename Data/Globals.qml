@@ -23,8 +23,9 @@ Singleton {
   }
 
   // ── Menu trigger ──────────────────────────────────────────────────────────
-  readonly property real menuTriggerThreshold: 0.10
-  readonly property bool menuOpen: mouseX < menuTriggerThreshold
+  // menuOpen is driven ONLY by an explicit click on the edge pill.
+  // It is NOT auto-opened by mouse proximity, so it never steals focus from apps.
+  property bool menuOpen: false
 
   // ── Navigation ────────────────────────────────────────────────────────────
   // "main" | "toggles" | "settings"
