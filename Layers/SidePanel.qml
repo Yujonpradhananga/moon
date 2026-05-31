@@ -71,6 +71,7 @@ WlrLayershell {
     readonly property real r: layerRoot.circleSize
     property real dragX: 0
     property bool dragging: false
+    property bool hidden: false
     readonly property real dragProgress: Math.min(dragX / layerRoot.dragThreshold, 1.0)
 
     clip: false
@@ -82,7 +83,10 @@ WlrLayershell {
     Connections {
       target: Dat.Globals
       function onMenuOpenChanged() {
-        if (!Dat.Globals.menuOpen) circle.completing = false
+        if (!Dat.Globals.menuOpen) {
+          circle.completing = false
+          circleZone.hidden = false
+        }
       }
     }
 
@@ -110,8 +114,9 @@ WlrLayershell {
 
       anchors.verticalCenter: parent.verticalCenter
 
-      opacity: (completing || Dat.Globals.menuOpen) ? 0.0 : 1.0
+      opacity: (completing || Dat.Globals.menuOpen || circleZone.hidden) ? 0.0 : 1.0
       Behavior on opacity {
+        enabled: !circleZone.hidden
         NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
       }
 
@@ -198,6 +203,7 @@ WlrLayershell {
     }
 
     Text {
+      id: dragText
       anchors.left: circle.right
       anchors.leftMargin: 8
       anchors.verticalCenter: circle.verticalCenter
@@ -207,10 +213,13 @@ WlrLayershell {
       font.letterSpacing: circleZone.dragProgress > 0.15 ? 0 : 2.5
       font.weight: Font.Medium
       color: "#c8b8ff"
-      opacity: (hoverArea.containsMouse || circleZone.dragging) && !Dat.Globals.menuOpen
+      opacity: (hoverArea.containsMouse || circleZone.dragging) && !Dat.Globals.menuOpen && !circleZone.hidden
                  ? (0.5 + 0.5 * circleZone.dragProgress)
                  : 0.0
-      Behavior on opacity   { NumberAnimation { duration: 200 } }
+      Behavior on opacity {
+        enabled: !circleZone.hidden
+        NumberAnimation { duration: 200 }
+      }
       Behavior on font.pixelSize { NumberAnimation { duration: 150 } }
     }
 
@@ -262,7 +271,7 @@ WlrLayershell {
       onTriggered: {
         circleZone.dragging = false
         circleZone.dragX = 0
-        circle.completing = false
+        circleZone.hidden = true
       }
     }
 
@@ -327,7 +336,7 @@ WlrLayershell {
 
     Timer {
       id: menuOpenDelay
-      interval: 250
+      interval:305
       repeat: false
       onTriggered: Dat.Globals.menuOpen = true
     }

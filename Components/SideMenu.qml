@@ -17,7 +17,6 @@ Item {
   height: parent.height
   width: menuWidth
 
-  // Start offscreen-left, hidden
   x: -menuWidth
   opacity: 0.0
 
@@ -30,41 +29,38 @@ Item {
     }
   }
 
-  // ── Open: swipe in from left while fading in ──────────────────────────────
   ParallelAnimation {
     id: openAnim
     NumberAnimation {
       target: root; property: "x"
-      from: -root.menuWidth; to: 0
+      to: 0
       duration: 480
       easing.bezierCurve: Dat.Easing.emphasizedDecel
     }
     NumberAnimation {
       target: root; property: "opacity"
-      from: 0.0; to: 1.0
+      to: 1.0
       duration: 360
       easing.bezierCurve: Dat.Easing.emphasizedDecel
     }
   }
 
-  // ── Close: swipe out to left while fading out ─────────────────────────────
   ParallelAnimation {
     id: closeAnim
     NumberAnimation {
       target: root; property: "x"
-      from: 0; to: -root.menuWidth
+      to: -root.menuWidth
       duration: 340
       easing.bezierCurve: Dat.Easing.emphasizedAccel
     }
     NumberAnimation {
       target: root; property: "opacity"
-      from: 1.0; to: 0.0
+      to: 0.0
       duration: 260
       easing.bezierCurve: Dat.Easing.emphasizedAccel
     }
   }
 
-  // ── Click-outside to close ────────────────────────────────────────────────
   MouseArea {
     id: dismissArea
     anchors.fill: parent
@@ -348,7 +344,6 @@ Item {
     }
   }
 
-  // ── Settings panel (shader picker) ──────────────────────────────────────
   BlobRect {
     id: settingsBlob
 
@@ -382,20 +377,15 @@ Item {
     }
   }
 
-  // ── Star-fall particle burst ───────────────────────────────────────────────
-  // Fires a one-shot burst of falling stars each time the menu opens.
-  // Stars spawn across the full top edge and drift downward with slight
-  // horizontal spread — like a tiny meteor shower greeting the user.
   ParticleSystem {
     id: starSystem
     anchors.fill: parent
-    // Only run while the menu is open; auto-stops when closed
     running: root.isOpen
 
     ImageParticle {
       groups: ["star"]
       source: "qrc:///particleresources/star.png"
-      color: "#c8b8ff"          // soft moonlit lavender
+      color: "#c8b8ff"
       colorVariation: 0.25
       alpha: 0.9
       alphaVariation: 0.15
@@ -404,27 +394,21 @@ Item {
       entryEffect: ImageParticle.Fade
     }
 
-    // Burst emitter: emits a tight volley then goes quiet
     Emitter {
       id: starEmitter
       group: "star"
-
-      // Full width of the menu, just above the top edge
       x: 0
       y: -4
       width: root.menuWidth
       height: 8
-
-      // Burst: high rate for a short window, then Timer kills it
-      emitRate: 0                // controlled by Connections below
+      emitRate: 0
       lifeSpan: 2400
       lifeSpanVariation: 800
-      size: 28                   // much bigger stars
+      size: 28
       sizeVariation: 20
-      endSize: 4                 // shrink but don't vanish instantly
+      endSize: 4
 
       velocity: AngleDirection {
-        // Straight down ± slight horizontal drift
         angle: 90
         angleVariation: 22
         magnitude: 150
@@ -432,13 +416,11 @@ Item {
       }
 
       acceleration: AngleDirection {
-        // Gentle gravity
         angle: 90
         magnitude: 50
       }
     }
 
-    // Stop the emitter after the opening burst
     Timer {
       id: burstTimer
       interval: 700
@@ -447,12 +429,11 @@ Item {
       onTriggered: starEmitter.emitRate = 0
     }
 
-    // Fire burst each time the menu opens
     Connections {
       target: root
       function onIsOpenChanged() {
         if (root.isOpen) {
-          starEmitter.emitRate = 90   // fire dense burst
+          starEmitter.emitRate = 90
           burstTimer.restart()
         } else {
           burstTimer.stop()
