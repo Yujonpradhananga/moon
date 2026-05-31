@@ -55,8 +55,16 @@ WlrLayershell {
     regions: [menuRegion, circleRegion]
   }
 
-  Region { id: menuRegion;   item: sideMenu }
-  Region { id: circleRegion; item: circleZone }
+  Region { id: menuRegion; item: sideMenu }
+
+  // Tight mask — only covers the 8px edge strip + visible circle extent
+  Region {
+    id: circleRegion
+    x: 0
+    y: circleZone.y + (circleZone.height - layerRoot.circleSize) / 2 - 20
+    width: Math.max(8, circle.x + circleZone.dragX + layerRoot.circleSize + 16)
+    height: layerRoot.circleSize + 40
+  }
 
   Comp.SideMenu {
     id: sideMenu
@@ -213,22 +221,39 @@ WlrLayershell {
       font.letterSpacing: circleZone.dragProgress > 0.15 ? 0 : 2.5
       font.weight: Font.Medium
       color: "#c8b8ff"
-      opacity: (hoverArea.containsMouse || circleZone.dragging) && !Dat.Globals.menuOpen && !circleZone.hidden
-                 ? (0.5 + 0.5 * circleZone.dragProgress)
-                 : 0.0
-      Behavior on opacity {
-        enabled: !circleZone.hidden
-        NumberAnimation { duration: 200 }
-      }
+opacity: (hoverArea.containsMouse || circleZone.dragging) && !Dat.Globals.menuOpen && !circleZone.hidden && !circle.completing
+           ? (0.5 + 0.5 * circleZone.dragProgress)
+           : 0.0
+Behavior on opacity {
+  enabled: !circleZone.hidden && !circle.completing
+  NumberAnimation { duration: 200 }
+}
       Behavior on font.pixelSize { NumberAnimation { duration: 150 } }
     }
 
     MouseArea {
       id: hoverArea
-      anchors.fill: parent
       hoverEnabled: true
       cursorShape: circleZone.dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
       visible: !Dat.Globals.menuOpen
+
+      // Vertically centered on the circle, not filling the whole circleZone
+      x: 0
+      y: (circleZone.height - circleZone.r - 40) / 2
+      height: circleZone.r + 40
+
+      // Key fix: only 8px wide at the left edge when idle so it doesn't
+      // block the top-left corner of the screen. Expands rightward while
+      // dragging to avoid losing the gesture mid-movement.
+      width: circleZone.dragging
+              ? (circle.shownX + circleZone.dragX + circleZone.r + 8)
+              : hoverArea.containsMouse
+                  ? (circle.shownX + circleZone.r + 16)
+                  : 8
+      Behavior on width {
+        enabled: !circleZone.dragging
+        NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+      }
 
       property real startX: 0
 
@@ -336,7 +361,7 @@ WlrLayershell {
 
     Timer {
       id: menuOpenDelay
-      interval:305
+      interval: 100
       repeat: false
       onTriggered: Dat.Globals.menuOpen = true
     }
