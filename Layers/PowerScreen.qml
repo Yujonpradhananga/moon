@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.Data as Dat
 import qs.Widgets as Wid
+import qs.Layers as Lay
 
 WlrLayershell {
   id: layerRoot
@@ -25,8 +26,8 @@ WlrLayershell {
 
   onVisibleChanged: {
     if (visible) {
-      animState = "wipe_in";
-      wipeInAnim.start();
+      animState = "wipe_in"
+      wipeInAnim.start()
     }
   }
 
@@ -87,121 +88,19 @@ WlrLayershell {
       opacity: 0.04
       Component.onCompleted: requestPaint()
       onPaint: {
-        var ctx = getContext("2d");
-        ctx.fillStyle = "#000000";
+        var ctx = getContext("2d")
+        ctx.fillStyle = "#000000"
         for (var y = 0; y < height; y += 4)
-          ctx.fillRect(0, y, width, 1);
+          ctx.fillRect(0, y, width, 1)
       }
     }
 
-    // Power options centered on screen
-    ColumnLayout {
+    Lay.LunarClockFace {
       anchors.centerIn: parent
-      spacing: 16
-
-      Text {
-        Layout.alignment: Qt.AlignHCenter
-        color: Dat.Colors.withAlpha(Dat.Colors.primary, 0.15)
-        font.pixelSize: 80
-        text: "☽"
-      }
-
-      Text {
-        Layout.alignment: Qt.AlignHCenter
-        Layout.bottomMargin: 40
-        color: Dat.Colors.withAlpha(Dat.Colors.foreground, 0.4)
-        font.family: "Inter"
-        font.letterSpacing: 4
-        font.pixelSize: 12
-        font.weight: Font.Light
-        text: "W H A T   N O W"
-      }
-
-      Repeater {
-        model: ListModel {
-          ListElement { icon: "⏻"; label: "Power Off";  cmd: "poweroff" }
-          ListElement { icon: "↺"; label: "Restart";    cmd: "reboot" }
-          ListElement { icon: "⏾"; label: "Sleep";      cmd: "systemctl suspend" }
-        }
-
-        delegate: Item {
-          id: powerItem
-          required property int index
-          required property string icon
-          required property string label
-          required property string cmd
-
-          Layout.preferredWidth: 280
-          Layout.preferredHeight: 56
-
-          MouseArea {
-            id: itemMouse
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            hoverEnabled: true
-            onClicked: {
-              console.log("[MoonShell] Power action: " + powerItem.cmd)
-              Qt.callLater(() => {
-                const proc = Qt.createQmlObject(
-                  'import Quickshell.Io; Process { command: ["sh", "-c", "' + powerItem.cmd + '"]; running: true }',
-                  layerRoot
-                )
-              })
-            }
-          }
-
-          Rectangle {
-            anchors.fill: parent
-            anchors.leftMargin: -12
-            anchors.rightMargin: -12
-            color: itemMouse.containsMouse ? Dat.Colors.withAlpha(Dat.Colors.primary, 0.12) : "transparent"
-            radius: 8
-            Behavior on color { ColorAnimation { duration: 200 } }
-          }
-
-          // Left accent bar
-          Rectangle {
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 10
-            anchors.left: parent.left
-            anchors.leftMargin: -16
-            anchors.top: parent.top
-            anchors.topMargin: 10
-            color: Dat.Colors.secondary
-            opacity: itemMouse.containsMouse ? 1.0 : 0.0
-            radius: 2
-            width: 3
-            Behavior on opacity { NumberAnimation { duration: 200 } }
-          }
-
-          RowLayout {
-            anchors.fill: parent
-            spacing: 16
-
-            Text {
-              Layout.alignment: Qt.AlignVCenter
-              Layout.preferredWidth: 24
-              color: itemMouse.containsMouse ? Dat.Colors.secondaryBright : Dat.Colors.primaryDim
-              font.pixelSize: 18
-              horizontalAlignment: Text.AlignHCenter
-              text: powerItem.icon
-              Behavior on color { ColorAnimation { duration: 200 } }
-            }
-
-            Text {
-              Layout.alignment: Qt.AlignVCenter
-              Layout.fillWidth: true
-              color: itemMouse.containsMouse ? Dat.Colors.foreground : Dat.Colors.foregroundMuted
-              font.family: "Inter"
-              font.letterSpacing: 1.5
-              font.pixelSize: 15
-              font.weight: itemMouse.containsMouse ? Font.Normal : Font.Light
-              text: powerItem.label
-              Behavior on color { ColorAnimation { duration: 200 } }
-            }
-          }
-        }
-      }
+      anchors.verticalCenterOffset: -60
+      scale: 1.3
+      faceColor: Dat.Colors.primary
+      z: 1
     }
 
     MouseArea {

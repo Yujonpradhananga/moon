@@ -28,6 +28,10 @@ ShellRoot {
         modelData: scopeRoot.modelData
       }
 
+      Lay.SystemTray {
+              modelData: scopeRoot.modelData
+            }
+
       // Cava visualizer
       Lay.Cava {
         modelData: scopeRoot.modelData

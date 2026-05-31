@@ -229,6 +229,8 @@ ParallelAnimation {
                 Dat.Globals.sideMenuView = "toggles"
               } else if (menuItem.label === "Settings") {
                 Dat.Globals.sideMenuView = "settings"
+              } else if (menuItem.label === "Files") {
+                Dat.Globals.sideMenuView = "files"
               }
             }
           }

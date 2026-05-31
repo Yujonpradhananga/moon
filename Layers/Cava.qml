@@ -1,97 +1,103 @@
 import Quickshell
 import Quickshell.Wayland
 import QtQuick
-import QtQuick.Layouts
 import CavaMonitor 1.0
 
 Scope {
     id: root
-    
+
     required property ShellScreen modelData
-    property int barCount: 30
-    property int maxBarWidth: 400
-    property int barHeight: 15
-    property int barGap: 6
-    
-    // CavaMonitor plugin replaces the Process-based approach
+
     CavaMonitor {
         id: cava
-        bars: root.barCount
+        bars: 40
         active: true
     }
-    
+
     Variants {
         model: Quickshell.screens
-        
+
         PanelWindow {
             id: window
             required property var modelData
             screen: modelData
             color: "transparent"
-            
+            implicitHeight: 200
             WlrLayershell.layer: WlrLayer.Bottom
+            WlrLayershell.namespace: "moon.cava"
             WlrLayershell.exclusionMode: ExclusionMode.Ignore
-            
+
             anchors {
+                left: true
                 right: true
-                top: true
                 bottom: true
             }
-            
-            implicitWidth: root.maxBarWidth
-            
-            Rectangle {
+
+            Canvas {
+                id: canvas
                 anchors.fill: parent
-                color: "transparent"
-                
-                Column {
-                    anchors {
-                        right: parent.right
-                        verticalCenter: parent.verticalCenter
+
+                Connections {
+                    target: cava
+                    function onValuesChanged() {
+                        canvas.requestPaint()
                     }
-                    spacing: root.barGap
-                    
-                    Repeater {
-                        model: root.barCount
-                        
-                        Rectangle {
-                            id: barItem
-                            required property int index
-                            
-                            readonly property real magnitude: cava.values[index] || 0
-                            
-                            height: root.barHeight
-                            width: 6 + (magnitude * root.maxBarWidth)
-                            radius: root.barHeight / 2
-                            
-                            anchors.right: parent.right
-                            
-                            color: colors.color4
-                            
-                            gradient: Gradient {
-                                orientation: Gradient.Horizontal
-                                GradientStop { position: 0.0; color: "#ffffff" }
-                                GradientStop { position: 0.3; color: colors.color4 }
-                                GradientStop { position: 1.0; color: colors.color5 }
-                            }
-                            
-                            border.color: Qt.rgba(1, 1, 1, 0.2)
-                            border.width: 1
-                            opacity: 0.4 + magnitude * 0.6
-                            
-                            Behavior on width {
-                                NumberAnimation {
-                                    duration: 50
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-                            
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: 50
-                                }
-                            }
-                        }
+                }
+
+                onPaint: {
+                    var ctx = getContext("2d")
+                    ctx.clearRect(0, 0, width, height)
+                    drawMountainWave(ctx, cava.values, true)
+                    drawMountainWave(ctx, cava.values, false)
+                }
+
+                function drawMountainWave(ctx, data, isShadow) {
+                    if (!data || data.length < 2) return
+
+var gradient = ctx.createLinearGradient(0, 0, width, 0)
+gradient.addColorStop(0.0, Qt.rgba(1, 1, 1, 0.15))
+gradient.addColorStop(0.3, Qt.rgba(1, 1, 1, 0.25))
+gradient.addColorStop(0.6, Qt.rgba(1, 1, 1, 0.20))
+gradient.addColorStop(1.0, Qt.rgba(1, 1, 1, 0.15))
+
+                    ctx.beginPath()
+
+                    if (isShadow) {
+                        ctx.globalAlpha = 0.3
+                        ctx.save()
+                        ctx.translate(0, -10)
+                        ctx.scale(1.02, 1.05)
+                    } else {
+                        ctx.globalAlpha = 1.0
+                    }
+
+                    ctx.fillStyle = gradient
+                    ctx.moveTo(0, height)
+
+                    var startY = height - (data[0] * height)
+                    ctx.lineTo(0, startY)
+
+                    var barWidth = width / (data.length - 1)
+
+                    for (var i = 0; i < data.length - 1; i++) {
+                        var xCurr = i * barWidth
+                        var yCurr = height - (data[i] * height)
+                        var xNext = (i + 1) * barWidth
+                        var yNext = height - (data[i + 1] * height)
+                        var xMid = (xCurr + xNext) / 2
+                        var yMid = (yCurr + yNext) / 2
+                        ctx.quadraticCurveTo(xCurr, yCurr, xMid, yMid)
+                    }
+
+                    var lastX = (data.length - 1) * barWidth
+                    var lastY = height - (data[data.length - 1] * height)
+                    ctx.lineTo(lastX, lastY)
+                    ctx.lineTo(width, height)
+                    ctx.closePath()
+                    ctx.fill()
+
+                    if (isShadow) {
+                        ctx.restore()
                     }
                 }
             }

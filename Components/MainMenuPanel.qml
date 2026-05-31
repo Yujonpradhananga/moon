@@ -6,6 +6,7 @@ import qs.Data as Dat
 
 BlobRect {
   id: root
+  color: "transparent"
 
   required property string currentView
   required property var blobGroup
@@ -110,6 +111,8 @@ BlobRect {
               Dat.Globals.powerScreenVisible = true;
             } else if (menuItem.label === "Continue") {
               Dat.Globals.sideMenuView = "toggles";
+            } else if (menuItem.label === "Files") {
+              Dat.Globals.sideMenuView = "files";
             }
           }
         }
