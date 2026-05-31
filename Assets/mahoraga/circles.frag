@@ -28,14 +28,14 @@ void main() {
     float dist2 = abs(mask - ring2);
 
     // Thin glowing ring — sharper falloff = thinner line
-    float glow1 = smoothstep(0.06, 0.0, dist1) * (1.0 - ring1);  // fades as it expands
-    float glow2 = smoothstep(0.06, 0.0, dist2) * (1.0 - ring2);
+    float glow1 = smoothstep(0.08, 0.0, dist1) * (1.0 - ring1);
+    float glow2 = smoothstep(0.08, 0.0, dist2) * (1.0 - ring2);
 
     float glow = max(glow1, glow2);
 
     // Add the glow on top of the base image — soft blue-white tint
     vec3 ringColor = vec3(0.7, 0.85, 1.0);
-    base.rgb = mix(base.rgb, base.rgb + ringColor * glow * 0.6, mask);
+    base.rgb = mix(base.rgb, base.rgb + ringColor * glow * 1.4, mask);
 
     fragColor = base * qt_Opacity;
 }

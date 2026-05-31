@@ -177,6 +177,8 @@ Item {
                 Dat.Globals.powerScreenVisible = true;
               } else if (menuItem.label === "Continue") {
                 Dat.Globals.sideMenuView = "toggles";
+              } else if (menuItem.label === "Settings") {
+                Dat.Globals.sideMenuView = "settings";
               }
             }
           }
@@ -300,6 +302,40 @@ Item {
     Wid.QuickTogglesPanel {
       anchors.fill: parent
       opacity: root.currentView === "toggles" ? 1.0 : 0.0
+      visible: opacity > 0
+
+      Behavior on opacity {
+        NumberAnimation {
+          duration: 300
+          easing.type: Easing.OutCubic
+        }
+      }
+    }
+  }
+
+  // ── Settings panel (shader picker) ──────────────────────────────────────
+  BlobRect {
+    id: settingsBlob
+
+    group: menuBlobGroup
+    width: root.menuWidth
+    height: parent.height
+    x: root.currentView === "settings" ? 0 : root.menuWidth
+    radius: 0
+    stiffness: 00
+    damping: 24
+    deformScale: 1.0002
+
+    Behavior on x {
+      NumberAnimation {
+        duration: 450
+        easing.type: Easing.InOutCubic
+      }
+    }
+
+    Wid.ShaderPicker {
+      anchors.fill: parent
+      opacity: root.currentView === "settings" ? 1.0 : 0.0
       visible: opacity > 0
 
       Behavior on opacity {

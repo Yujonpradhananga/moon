@@ -16,7 +16,7 @@ WlrLayershell {
   color: "transparent"
   exclusionMode: ExclusionMode.Ignore
   focusable: false
-  layer: WlrLayer.Bottom
+  layer: WlrLayer.Top
   namespace: "moon.mousetracker"
   screen: modelData
 

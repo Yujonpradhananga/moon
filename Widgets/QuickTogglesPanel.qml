@@ -1,3 +1,6 @@
+// QuickTogglesPanel.qml
+// Wi-Fi, Bluetooth, and system toggles panel.
+
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -9,98 +12,109 @@ Item {
   clip: true
 
   ColumnLayout {
-    anchors.bottom: parent.bottom
-    anchors.bottomMargin: 60
-    anchors.left: parent.left
-    anchors.leftMargin: 40
-    anchors.right: parent.right
-    anchors.rightMargin: 40
-    anchors.top: parent.top
-    anchors.topMargin: 80
+    anchors {
+      fill: parent
+      leftMargin: 40; rightMargin: 40
+      topMargin: 80;  bottomMargin: 60
+    }
     spacing: 8
 
-    Item {
-      Layout.bottomMargin: 40
+    Gen.PanelHeader {
       Layout.fillWidth: true
-      Layout.preferredHeight: headerCol.height
+      Layout.bottomMargin: 40
+      title: "Q U I C K  T O G G L E S"
+      onBack: Dat.Globals.sideMenuView = "main"
+    }
 
-      ColumnLayout {
-        id: headerCol
-        anchors.left: parent.left
-        anchors.right: parent.right
-        spacing: 8
+    Gen.ToggleRow {
+      Layout.fillWidth: true
+      icon:       "◉"
+      label:      "Wi-Fi"
+      statusText: Dat.Network.wifiEnabled
+        ? (Dat.Network.networkName || "Enabled")
+        : "Disabled"
+      toggled:    Dat.Network.wifiEnabled
+      onClicked:  Dat.Network.toggleWifi()
+    }
 
-        RowLayout {
-          Layout.fillWidth: true
-          spacing: 12
+    Gen.ToggleRow {
+      Layout.fillWidth: true
+      icon:       "◈"
+      label:      "Bluetooth"
+      statusText: Dat.Bluetooth.enabled
+        ? (Dat.Bluetooth.connected ? Dat.Bluetooth.deviceName : "On")
+        : "Disabled"
+      toggled:    Dat.Bluetooth.enabled
+      visible:    Dat.Bluetooth.available
+      onClicked:  Dat.Bluetooth.toggle()
+    }
 
-          Item {
-            Layout.preferredHeight: 32
-            Layout.preferredWidth: 32
-
-            MouseArea {
-              anchors.fill: parent
-              cursorShape: Qt.PointingHandCursor
-              hoverEnabled: true
-              onClicked: Dat.Globals.sideMenuView = "main"
-
-              Rectangle {
-                anchors.fill: parent
-                color: parent.containsMouse ? Dat.Colors.withAlpha(Dat.Colors.primary, 0.12) : "transparent"
-                radius: 8
-                Behavior on color { ColorAnimation { duration: 200 } }
-              }
-            }
-
-            Text {
-              anchors.centerIn: parent
-              color: Dat.Colors.foreground
-              font.pixelSize: 18
-              text: "◂"
-            }
-          }
-
-          Text {
-            Layout.fillWidth: true
-            color: Dat.Colors.secondaryBright
-            font.pixelSize: 36
-            text: "☽"
-          }
-        }
-
-        Text {
-          Layout.fillWidth: true
-          color: Dat.Colors.foreground
-          font.family: "Inter"
-          font.letterSpacing: 4
-          font.pixelSize: 14
-          font.weight: Font.Light
-          text: "Q U I C K  T O G G L E S"
-        }
-
-        Rectangle {
-          Layout.fillWidth: true
-          Layout.preferredHeight: 1
-          Layout.topMargin: 12
-          color: Dat.Colors.withAlpha(Dat.Colors.primary, 0.3)
-        }
+    Gen.ToggleRow {
+      id: nightLight
+      Layout.fillWidth: true
+      icon:       "☾"
+      label:      "Night Light"
+      statusText: toggled ? "On" : "Off"
+      toggled:    false
+      onClicked: {
+        toggled = !toggled;
+        Quickshell.execDetached(["hyprctl", "keyword", "decoration:screen_shader",
+          toggled ? Qt.resolvedUrl("~/.config/hypr/shaders/nightlight.glsl").toString() : ""]);
       }
     }
 
-    Gen.WifiToggle { Layout.fillWidth: true }
-    Gen.BluetoothToggle { Layout.fillWidth: true }
-    Gen.NightLightToggle { Layout.fillWidth: true }
-    Gen.DndToggle { Layout.fillWidth: true }
-
-    Item {
-      Layout.fillHeight: true
+    Gen.ToggleRow {
+      id: dnd
       Layout.fillWidth: true
+      icon:       "◯"
+      label:      "Do Not Disturb"
+      statusText: toggled ? "On" : "Off"
+      toggled:    false
+      onClicked: {
+        toggled = !toggled;
+        Quickshell.execDetached(["bash", "-c",
+          toggled
+            ? "makoctl set-mode do-not-disturb 2>/dev/null; swaync-client -d 2>/dev/null"
+            : "makoctl set-mode default 2>/dev/null; swaync-client -D 2>/dev/null"]);
+      }
     }
 
+    Gen.ToggleRow {
+      id: idleInhibit
+      Layout.fillWidth: true
+      icon:       "☀"
+      label:      "Idle Inhibitor"
+      statusText: toggled ? "Screen stays on" : "Off"
+      toggled:    false
+      onClicked: {
+        toggled = !toggled;
+        Quickshell.execDetached(["bash", "-c",
+          toggled
+            ? "pidof wayland-idle-inhibitor.py || wayland-idle-inhibitor.py &"
+            : "pkill -f wayland-idle-inhibitor"]);
+      }
+    }
+
+    Gen.ToggleRow {
+      id: gameMode
+      Layout.fillWidth: true
+      icon:       "▣"
+      label:      "Game Mode"
+      statusText: toggled ? "Active" : "Off"
+      toggled:    false
+      onClicked: {
+        toggled = !toggled;
+        Quickshell.execDetached(["bash", "-c",
+          "gamemoded -" + (toggled ? "r" : "d") + " 2>/dev/null"]);
+      }
+    }
+
+    Item { Layout.fillHeight: true; Layout.fillWidth: true }
+
     Text {
-      Layout.alignment: Qt.AlignHCenter
+      Layout.alignment:    Qt.AlignHCenter
       Layout.bottomMargin: 20
-      color: Dat.Colors.withAlpha(Dat.Colors.primary, 0.25)
+      color:          Dat.Colors.withAlpha(Dat.Colors.primary, 0.25)
       font.pixelSize: 28
       text: "🌙"
     }

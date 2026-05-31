@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import Quickshell
 import QtQuick
 import qs.Layers as Lay
+import qs.Widgets as Wid
 
 ShellRoot {
   Variants {
@@ -12,17 +13,12 @@ ShellRoot {
       id: scopeRoot
       required property ShellScreen modelData
 
-      // Mouse tracker — feeds Globals.mouseX for all components
-      Lay.MouseTracker {
+      // Wallpaper engine (WlrLayershell at Background level)
+      Wid.WallpaperEngine {
         modelData: scopeRoot.modelData
       }
 
-      // Wallpaper — rendering only (WallpaperEngine + dim + clock)
-      Lay.Wallpaper {
-        modelData: scopeRoot.modelData
-      }
-
-      // Side panel — modular, triggers via Globals.mouseX
+      // Side panel — mouse tracking + menu (Top level)
       Lay.SidePanel {
         modelData: scopeRoot.modelData
       }
