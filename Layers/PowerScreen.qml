@@ -1,15 +1,13 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
-
 import qs.Data as Dat
 import qs.Widgets as Wid
 
 WlrLayershell {
   id: layerRoot
-
   required property ShellScreen modelData
-
   anchors.bottom: true
   anchors.left: true
   anchors.right: true
@@ -22,12 +20,9 @@ WlrLayershell {
   screen: modelData
   visible: Dat.Globals.powerScreenVisible
 
-  // Track the wipe animation state
-  // "idle" = hidden, "wipe_in" = circle expanding, "open" = fully open, "wipe_out" = circle shrinking
   property string animState: "idle"
   property real wipeProgress: 0.0
 
-  // When powerScreenVisible toggles, start the wipe-in
   onVisibleChanged: {
     if (visible) {
       animState = "wipe_in";
@@ -35,84 +30,62 @@ WlrLayershell {
     }
   }
 
-  // Wipe-in animation: circle grows from center to cover the screen
   NumberAnimation {
     id: wipeInAnim
-
     duration: 800
     easing.type: Easing.InOutCubic
     from: 0.0
     property: "wipeProgress"
     target: layerRoot
     to: 1.0
-
-    onFinished: {
-      layerRoot.animState = "open";
-    }
+    onFinished: layerRoot.animState = "open"
   }
 
-  // Wipe-out animation: circle shrinks back to nothing
   NumberAnimation {
     id: wipeOutAnim
-
     duration: 600
     easing.type: Easing.InOutCubic
     from: 1.0
     property: "wipeProgress"
     target: layerRoot
     to: 0.0
-
     onFinished: {
-      layerRoot.animState = "idle";
-      Dat.Globals.powerScreenVisible = false;
+      layerRoot.animState = "idle"
+      Dat.Globals.powerScreenVisible = false
     }
   }
 
-  // Circular wipe overlay
   Wid.CircularWipe {
     id: circularWipe
-
     anchors.fill: parent
     wipeProgress: layerRoot.wipeProgress
   }
 
-  // Content that fades in after the wipe completes
   Item {
     id: contentArea
-
     anchors.fill: parent
     opacity: layerRoot.animState === "open" ? 1.0 : 0.0
-
     Behavior on opacity {
-      NumberAnimation {
-        duration: 400
-        easing.type: Easing.OutCubic
-      }
+      NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
     }
 
-    // Solid dark background
     Rectangle {
       anchors.fill: parent
       color: Dat.Colors.background
     }
 
-    // Auroric plasma effect that follows the mouse
     Wid.AuroricCursor {
       id: auroricEffect
-
       anchors.fill: parent
       cursorX: powerMouseArea.mouseX
       cursorY: powerMouseArea.mouseY
       glowRadius: 200
     }
 
-    // Subtle scanlines overlay for texture
     Canvas {
       anchors.fill: parent
       opacity: 0.04
-
       Component.onCompleted: requestPaint()
-
       onPaint: {
         var ctx = getContext("2d");
         ctx.fillStyle = "#000000";
@@ -121,36 +94,135 @@ WlrLayershell {
       }
     }
 
-    // Decorative: small crescent in the center
-    Text {
+    // Power options centered on screen
+    ColumnLayout {
       anchors.centerIn: parent
-      color: Dat.Colors.withAlpha(Dat.Colors.primary, 0.15)
-      font.pixelSize: 120
-      text: "☽"
+      spacing: 16
+
+      Text {
+        Layout.alignment: Qt.AlignHCenter
+        color: Dat.Colors.withAlpha(Dat.Colors.primary, 0.15)
+        font.pixelSize: 80
+        text: "☽"
+      }
+
+      Text {
+        Layout.alignment: Qt.AlignHCenter
+        Layout.bottomMargin: 40
+        color: Dat.Colors.withAlpha(Dat.Colors.foreground, 0.4)
+        font.family: "Inter"
+        font.letterSpacing: 4
+        font.pixelSize: 12
+        font.weight: Font.Light
+        text: "W H A T   N O W"
+      }
+
+      Repeater {
+        model: ListModel {
+          ListElement { icon: "⏻"; label: "Power Off";  cmd: "poweroff" }
+          ListElement { icon: "↺"; label: "Restart";    cmd: "reboot" }
+          ListElement { icon: "⏾"; label: "Sleep";      cmd: "systemctl suspend" }
+        }
+
+        delegate: Item {
+          id: powerItem
+          required property int index
+          required property string icon
+          required property string label
+          required property string cmd
+
+          Layout.preferredWidth: 280
+          Layout.preferredHeight: 56
+
+          MouseArea {
+            id: itemMouse
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            hoverEnabled: true
+            onClicked: {
+              console.log("[MoonShell] Power action: " + powerItem.cmd)
+              Qt.callLater(() => {
+                const proc = Qt.createQmlObject(
+                  'import Quickshell.Io; Process { command: ["sh", "-c", "' + powerItem.cmd + '"]; running: true }',
+                  layerRoot
+                )
+              })
+            }
+          }
+
+          Rectangle {
+            anchors.fill: parent
+            anchors.leftMargin: -12
+            anchors.rightMargin: -12
+            color: itemMouse.containsMouse ? Dat.Colors.withAlpha(Dat.Colors.primary, 0.12) : "transparent"
+            radius: 8
+            Behavior on color { ColorAnimation { duration: 200 } }
+          }
+
+          // Left accent bar
+          Rectangle {
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 10
+            anchors.left: parent.left
+            anchors.leftMargin: -16
+            anchors.top: parent.top
+            anchors.topMargin: 10
+            color: Dat.Colors.secondary
+            opacity: itemMouse.containsMouse ? 1.0 : 0.0
+            radius: 2
+            width: 3
+            Behavior on opacity { NumberAnimation { duration: 200 } }
+          }
+
+          RowLayout {
+            anchors.fill: parent
+            spacing: 16
+
+            Text {
+              Layout.alignment: Qt.AlignVCenter
+              Layout.preferredWidth: 24
+              color: itemMouse.containsMouse ? Dat.Colors.secondaryBright : Dat.Colors.primaryDim
+              font.pixelSize: 18
+              horizontalAlignment: Text.AlignHCenter
+              text: powerItem.icon
+              Behavior on color { ColorAnimation { duration: 200 } }
+            }
+
+            Text {
+              Layout.alignment: Qt.AlignVCenter
+              Layout.fillWidth: true
+              color: itemMouse.containsMouse ? Dat.Colors.foreground : Dat.Colors.foregroundMuted
+              font.family: "Inter"
+              font.letterSpacing: 1.5
+              font.pixelSize: 15
+              font.weight: itemMouse.containsMouse ? Font.Normal : Font.Light
+              text: powerItem.label
+              Behavior on color { ColorAnimation { duration: 200 } }
+            }
+          }
+        }
+      }
     }
 
-    // Mouse area for tracking + dismiss
     MouseArea {
       id: powerMouseArea
-
       anchors.fill: parent
       cursorShape: Qt.ArrowCursor
       hoverEnabled: true
-
+      z: -1
       onClicked: {
         if (layerRoot.animState === "open") {
-          layerRoot.animState = "wipe_out";
-          wipeOutAnim.start();
+          layerRoot.animState = "wipe_out"
+          wipeOutAnim.start()
         }
       }
     }
   }
 
-  // Escape key to close
   Keys.onEscapePressed: {
     if (animState === "open") {
-      animState = "wipe_out";
-      wipeOutAnim.start();
+      animState = "wipe_out"
+      wipeOutAnim.start()
     }
   }
 }
