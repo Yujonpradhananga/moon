@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Particles
 import Caelestia.Blobs
-
+import Qt5Compat.GraphicalEffects
 import qs.Data as Dat
 import qs.Widgets as Wid
 
@@ -15,50 +15,77 @@ Item {
 
   clip: true
   height: parent.height
-  width: menuWidth
+width: isOpen ? menuWidth : 0
+Behavior on width {
+  NumberAnimation { duration: 480; easing.type: Easing.OutCubic }
+}
 
-  x: -menuWidth
-  opacity: 0.0
+  // Always in place — iris mask handles visibility
+  x: 0
+  opacity: 1.0
+visible: irisRadius > 0 || opacity > 0
 
-  onIsOpenChanged: {
-    if (isOpen) {
-      openAnim.restart();
-    } else {
-      closeAnim.restart();
-      Dat.Globals.sideMenuView = "main";
+  // Iris wipe radius — 0 = fully closed, irisMax = fully open
+  readonly property real irisMax: Math.sqrt(menuWidth * menuWidth + height * height) / 2 + 10
+  property real irisRadius: 0
+
+onIsOpenChanged: {
+  if (isOpen) {
+    root.opacity = 1.0
+    irisOpenAnim.restart()
+  } else {
+    irisCloseAnim.restart()
+    Dat.Globals.sideMenuView = "main"
+  }
+}
+
+  NumberAnimation {
+    id: irisOpenAnim
+    target: root
+    property: "irisRadius"
+    from: 0
+    to: root.irisMax
+    duration: 480
+    easing.bezierCurve: Dat.Easing.emphasizedDecel
+  }
+
+ParallelAnimation {
+  id: irisCloseAnim
+  NumberAnimation {
+    target: root; property: "irisRadius"
+    from: root.irisMax; to: 0
+    duration: 340; easing.bezierCurve: Dat.Easing.emphasizedAccel
+  }
+  NumberAnimation {
+    target: root; property: "opacity"
+    from: 1.0; to: 0.0
+    duration: 280; easing.type: Easing.OutCubic
+  }
+}
+
+  // Iris mask drawn via Canvas
+  Canvas {
+    id: irisCanvas
+    anchors.fill: parent
+    visible: false
+
+    property real radius: root.irisRadius
+
+    onRadiusChanged: requestPaint()
+
+    onPaint: {
+      const ctx = getContext("2d")
+      ctx.clearRect(0, 0, width, height)
+      ctx.fillStyle = "black"
+      ctx.beginPath()
+      ctx.arc(width / 2, height / 2, radius, 0, Math.PI * 2)
+      ctx.fill()
     }
   }
 
-  ParallelAnimation {
-    id: openAnim
-    NumberAnimation {
-      target: root; property: "x"
-      to: 0
-      duration: 480
-      easing.bezierCurve: Dat.Easing.emphasizedDecel
-    }
-    NumberAnimation {
-      target: root; property: "opacity"
-      to: 1.0
-      duration: 360
-      easing.bezierCurve: Dat.Easing.emphasizedDecel
-    }
-  }
-
-  ParallelAnimation {
-    id: closeAnim
-    NumberAnimation {
-      target: root; property: "x"
-      to: -root.menuWidth
-      duration: 340
-      easing.bezierCurve: Dat.Easing.emphasizedAccel
-    }
-    NumberAnimation {
-      target: root; property: "opacity"
-      to: 0.0
-      duration: 260
-      easing.bezierCurve: Dat.Easing.emphasizedAccel
-    }
+  layer.enabled: true
+  layer.effect: OpacityMask {
+    maskSource: irisCanvas
   }
 
   MouseArea {
@@ -71,7 +98,6 @@ Item {
 
   Rectangle {
     id: backdrop
-
     anchors.fill: parent
     color: "transparent"
 
@@ -100,14 +126,12 @@ Item {
 
   BlobGroup {
     id: menuBlobGroup
-
     color: Dat.Colors.withAlpha(Dat.Colors.background, 0.60)
     smoothing: 8
   }
 
   BlobRect {
     id: mainMenuBlob
-
     group: menuBlobGroup
     width: root.menuWidth
     height: parent.height
@@ -118,10 +142,7 @@ Item {
     deformScale: 1.0002
 
     Behavior on x {
-      NumberAnimation {
-        duration: 450
-        easing.type: Easing.InOutCubic
-      }
+      NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
     }
 
     ColumnLayout {
@@ -142,7 +163,6 @@ Item {
 
         ColumnLayout {
           id: titleColumn
-
           anchors.left: parent.left
           anchors.right: parent.right
           spacing: 8
@@ -197,19 +217,18 @@ Item {
 
           MouseArea {
             id: itemMouse
-
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             hoverEnabled: true
 
             onClicked: {
-              console.log("[MoonShell] Menu clicked: " + menuItem.label);
+              console.log("[MoonShell] Menu clicked: " + menuItem.label)
               if (menuItem.label === "Power") {
-                Dat.Globals.powerScreenVisible = true;
+                Dat.Globals.powerScreenVisible = true
               } else if (menuItem.label === "Continue") {
-                Dat.Globals.sideMenuView = "toggles";
+                Dat.Globals.sideMenuView = "toggles"
               } else if (menuItem.label === "Settings") {
-                Dat.Globals.sideMenuView = "settings";
+                Dat.Globals.sideMenuView = "settings"
               }
             }
           }
@@ -220,10 +239,7 @@ Item {
             anchors.rightMargin: -12
             color: itemMouse.containsMouse ? Dat.Colors.withAlpha(Dat.Colors.primary, 0.12) : "transparent"
             radius: 8
-
-            Behavior on color {
-              ColorAnimation { duration: 200 }
-            }
+            Behavior on color { ColorAnimation { duration: 200 } }
           }
 
           Rectangle {
@@ -237,10 +253,7 @@ Item {
             opacity: itemMouse.containsMouse ? 1.0 : 0.0
             radius: 2
             width: 3
-
-            Behavior on opacity {
-              NumberAnimation { duration: 200 }
-            }
+            Behavior on opacity { NumberAnimation { duration: 200 } }
           }
 
           RowLayout {
@@ -254,10 +267,7 @@ Item {
               font.pixelSize: 16
               horizontalAlignment: Text.AlignHCenter
               text: menuItem.icon
-
-              Behavior on color {
-                ColorAnimation { duration: 200 }
-              }
+              Behavior on color { ColorAnimation { duration: 200 } }
             }
 
             Text {
@@ -269,10 +279,7 @@ Item {
               font.pixelSize: 15
               font.weight: itemMouse.containsMouse ? Font.Normal : Font.Light
               text: menuItem.label
-
-              Behavior on color {
-                ColorAnimation { duration: 200 }
-              }
+              Behavior on color { ColorAnimation { duration: 200 } }
             }
           }
         }
@@ -295,25 +302,19 @@ Item {
 
   Item {
     id: mainMenuContent
-
     x: mainMenuBlob.x
     y: 0
     width: root.menuWidth
     height: parent.height
     opacity: root.currentView === "main" ? 1.0 : 0.0
     visible: opacity > 0
-
     Behavior on opacity {
-      NumberAnimation {
-        duration: 300
-        easing.type: Easing.OutCubic
-      }
+      NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
     }
   }
 
   BlobRect {
     id: togglesBlob
-
     group: menuBlobGroup
     width: root.menuWidth
     height: parent.height
@@ -322,31 +323,22 @@ Item {
     stiffness: 00
     damping: 24
     deformScale: 1.0002
-
     Behavior on x {
-      NumberAnimation {
-        duration: 450
-        easing.type: Easing.InOutCubic
-      }
+      NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
     }
 
     Wid.QuickTogglesPanel {
       anchors.fill: parent
       opacity: root.currentView === "toggles" ? 1.0 : 0.0
       visible: opacity > 0
-
       Behavior on opacity {
-        NumberAnimation {
-          duration: 300
-          easing.type: Easing.OutCubic
-        }
+        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
       }
     }
   }
 
   BlobRect {
     id: settingsBlob
-
     group: menuBlobGroup
     width: root.menuWidth
     height: parent.height
@@ -355,24 +347,16 @@ Item {
     stiffness: 00
     damping: 24
     deformScale: 1.0002
-
     Behavior on x {
-      NumberAnimation {
-        duration: 450
-        easing.type: Easing.InOutCubic
-      }
+      NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
     }
 
     Wid.ShaderPicker {
       anchors.fill: parent
       opacity: root.currentView === "settings" ? 1.0 : 0.0
       visible: opacity > 0
-
       Behavior on opacity {
-        NumberAnimation {
-          duration: 300
-          easing.type: Easing.OutCubic
-        }
+        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
       }
     }
   }

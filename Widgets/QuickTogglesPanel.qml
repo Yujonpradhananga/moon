@@ -49,19 +49,22 @@ Item {
       onClicked:  Dat.Bluetooth.toggle()
     }
 
-    Gen.ToggleRow {
-      id: nightLight
-      Layout.fillWidth: true
-      icon:       "☾"
-      label:      "Night Light"
-      statusText: toggled ? "On" : "Off"
-      toggled:    false
-      onClicked: {
-        toggled = !toggled;
-        Quickshell.execDetached(["hyprctl", "keyword", "decoration:screen_shader",
-          toggled ? Qt.resolvedUrl("~/.config/hypr/shaders/nightlight.glsl").toString() : ""]);
-      }
-    }
+Gen.ToggleRow {
+  id: nightLight
+  Layout.fillWidth: true
+  icon:       "☾"
+  label:      "Night Light"
+  statusText: toggled ? "On" : "Off"
+  toggled:    false
+  onClicked: {
+    toggled = !toggled
+    const shader = toggled
+      ? "/home/yujon/.config/hypr/Shaders/bluelight.frag"
+      : "/home/yujon/.config/hypr/Shaders/vibrant.glsl"
+    Quickshell.execDetached(["hyprctl", "eval",
+      "hl.config({ decoration = { screen_shader = \"" + shader + "\" } })"])
+  }
+}
 
     Gen.ToggleRow {
       id: dnd

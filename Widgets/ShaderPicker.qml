@@ -22,6 +22,12 @@ Item {
       icon:  "〰",
       label: "Water Flow",
       desc:  "Scrolling normal-map distortion with depth masking"
+    },
+    {
+      id: "cloudy",
+      icon: "☁",
+      label: "Cloud Veil",
+      desc: "Drifting atmospheric noise rolls across the surface"
     }
   ]
 

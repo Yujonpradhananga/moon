@@ -18,9 +18,9 @@ WlrLayershell {
     ? (circleSize / 2) + menuWidth + 20
     : circleSize + 80
 
-  Behavior on implicitWidth {
-    NumberAnimation { duration: 50 }
-  }
+Behavior on implicitWidth {
+  NumberAnimation { duration: 480; easing.type: Easing.OutCubic }
+}
 
   readonly property real circleSize: 56
   readonly property real menuWidth: 320
@@ -34,30 +34,12 @@ WlrLayershell {
   screen: modelData
   surfaceFormat.opaque: false
 
-  MouseArea {
-    id: globalTracker
-    anchors.fill: parent
-    acceptedButtons: Qt.NoButton
-    hoverEnabled: true
-    propagateComposedEvents: true
-
-    onPositionChanged: mouse => {
-      const fullW = layerRoot.screen.width
-      if (fullW > 0) {
-        Dat.Globals.mouseX       = mouse.x / fullW
-        Dat.Globals.mouseOffsetX = (mouse.x / fullW - 0.5) * 2.0
-        Dat.Globals.mouseOffsetY = (mouse.y / layerRoot.height - 0.5) * 2.0
-      }
-    }
-  }
-
   mask: Region {
     regions: [menuRegion, circleRegion]
   }
 
   Region { id: menuRegion; item: sideMenu }
 
-  // Tight mask — only covers the 8px edge strip + visible circle extent
   Region {
     id: circleRegion
     x: 0
@@ -221,13 +203,13 @@ WlrLayershell {
       font.letterSpacing: circleZone.dragProgress > 0.15 ? 0 : 2.5
       font.weight: Font.Medium
       color: "#c8b8ff"
-opacity: (hoverArea.containsMouse || circleZone.dragging) && !Dat.Globals.menuOpen && !circleZone.hidden && !circle.completing
-           ? (0.5 + 0.5 * circleZone.dragProgress)
-           : 0.0
-Behavior on opacity {
-  enabled: !circleZone.hidden && !circle.completing
-  NumberAnimation { duration: 200 }
-}
+      opacity: (hoverArea.containsMouse || circleZone.dragging) && !Dat.Globals.menuOpen && !circleZone.hidden && !circle.completing
+                 ? (0.5 + 0.5 * circleZone.dragProgress)
+                 : 0.0
+      Behavior on opacity {
+        enabled: !circleZone.hidden && !circle.completing
+        NumberAnimation { duration: 200 }
+      }
       Behavior on font.pixelSize { NumberAnimation { duration: 150 } }
     }
 
@@ -237,19 +219,16 @@ Behavior on opacity {
       cursorShape: circleZone.dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
       visible: !Dat.Globals.menuOpen
 
-      // Vertically centered on the circle, not filling the whole circleZone
       x: 0
       y: (circleZone.height - circleZone.r - 40) / 2
       height: circleZone.r + 40
 
-      // Key fix: only 8px wide at the left edge when idle so it doesn't
-      // block the top-left corner of the screen. Expands rightward while
-      // dragging to avoid losing the gesture mid-movement.
       width: circleZone.dragging
-              ? (circle.shownX + circleZone.dragX + circleZone.r + 8)
-              : hoverArea.containsMouse
-                  ? (circle.shownX + circleZone.r + 16)
-                  : 8
+               ? (circle.shownX + circleZone.dragX + circleZone.r + 8)
+               : hoverArea.containsMouse
+                   ? (circle.shownX + circleZone.r + 16)
+                   : 8
+
       Behavior on width {
         enabled: !circleZone.dragging
         NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
@@ -263,18 +242,22 @@ Behavior on opacity {
         startX = mouse.x
       }
 
-      onPositionChanged: mouse => {
-        if (!circleZone.dragging) return
-        circleZone.dragX = Math.max(0, mouse.x - startX)
-      }
+onPositionChanged: mouse => {
+  if (circleZone.dragging) {
+    circleZone.dragX = Math.max(0, mouse.x - startX)
+  }
+  const fullW = layerRoot.screen.width
+  if (fullW > 0) {
+    Dat.Globals.mouseX       = (circleZone.x + mouse.x) / fullW
+    Dat.Globals.mouseOffsetX = ((circleZone.x + mouse.x) / fullW - 0.5) * 2.0
+    Dat.Globals.mouseOffsetY = (mouse.y / layerRoot.height - 0.5) * 2.0
+  }
+}
 
       onReleased: mouse => {
         if (circleZone.dragX >= layerRoot.dragThreshold) {
           circle.completing = true
           rippleAnim.restart()
-          sparkSystem.running = true
-          sparkEmitter.emitRate = 120
-          burstTimer.restart()
           menuOpenDelay.restart()
           resetCircle.restart()
         } else {
@@ -325,7 +308,7 @@ Behavior on opacity {
         anchors.centerIn: parent
         width: 8; height: 8
         emitRate: 0
-        lifeSpan: 350
+        lifeSpan: 20
         lifeSpanVariation: 100
         size: 24
         sizeVariation: 14

@@ -1,10 +1,10 @@
 // WallpaperEngine.qml
 // Shader pipeline:
 //   Stage 1 → moon.png (base image)
-//   Stage 2 → Parallax (always on, mouse-driven via internal MouseArea)
-//   Stage 3 → Optional effect: "motion" | "waterripple"
-//   Stage 4 → Circles overlay
-//   Stage 5 → Final water-ripple pass
+//   Stage 2 → Optional effect: "motion" | "waterripple" | "cloudy"
+//   Stage 3 → Circles overlay
+//   Stage 4 → Final water-ripple pass
+//   Stage 5 → Parallax (last, mouse-driven, visible output)
 
 import QtQuick
 import Quickshell
@@ -26,10 +26,6 @@ WlrLayershell {
     layer: WlrLayer.Background
     namespace: "wallpaper.engine"
     screen: modelData
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Assets — invisible, used only as sampler inputs
-    // ─────────────────────────────────────────────────────────────────────────
 
     Image {
         id: img_depth
@@ -55,10 +51,6 @@ WlrLayershell {
         smooth: true; visible: false
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Stage 1 — Base image (moon.png only)
-    // ─────────────────────────────────────────────────────────────────────────
-
     Image {
         id: s1_moon
         source: Qt.resolvedUrl("../Assets/moon.png")
@@ -77,48 +69,13 @@ WlrLayershell {
         hideSource: true
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Stage 2 — Parallax (always active)
-    // IMPORTANT: driven by internal mouse tracking, NOT SidePanel.
-    // WallpaperEngine is at WlrLayer.Background so its MouseArea always
-    // receives hover events regardless of SidePanel's input mask.
-    // ─────────────────────────────────────────────────────────────────────────
-
-    ShaderEffect {
-        id: s2_parallax
-        anchors.fill: parent
-        visible: false
-
-        property var  source:           s1_out
-        property real offsetX:          Dat.Globals.mouseOffsetX
-        property real offsetY:          Dat.Globals.mouseOffsetY
-        property real parallaxStrength: 0.30
-        property real aspectRatio:      width / height
-
-        vertexShader:   Qt.resolvedUrl("../Assets/shaders/parallax/parallax.vert.qsb")
-        fragmentShader: Qt.resolvedUrl("../Assets/shaders/parallax/parallax.frag.qsb")
-    }
-
-    ShaderEffectSource {
-        id: s2_out
-        sourceItem: s2_parallax
-        anchors.fill: parent
-        visible: false
-        hideSource: true
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Stage 3 — Optional effect stacked on top of parallax
-    // "motion"      → expanding concentric ripple rings, depth-masked
-    // "waterripple" → scrolling normal-map distortion, depth-masked
-    // ─────────────────────────────────────────────────────────────────────────
-
+    // Stage 2 — Optional effects, all sourcing from s1_out directly
     ShaderEffect {
         id: s3_motion
         anchors.fill: parent
         visible: false
 
-        property var  source:    s2_out
+        property var  source:    s1_out
         property var  depthMask: img_depth
         property real time:      0
         property real strength:  0.006
@@ -139,7 +96,7 @@ WlrLayershell {
         anchors.fill: parent
         visible: false
 
-        property var  source:          s2_out
+        property var  source:          s1_out
         property var  normalMapSource: img_normal
         property var  trailMap:        s_trail
         property var  depthMask:       img_depth
@@ -158,6 +115,27 @@ WlrLayershell {
         fragmentShader: Qt.resolvedUrl("../Assets/shaders/waterripple/waterripple.frag.qsb")
     }
 
+    ShaderEffect {
+        id: s3_cloudy
+        anchors.fill: parent
+        visible: false
+
+        property var  source:    s1_out
+        property var  depthMask: img_depth
+        property real time:      0
+        property real strength:  0.006
+        property real speed:     2.5
+        property real frequency: 1.0
+
+        NumberAnimation on time {
+            from: 0; to: 1000; duration: 500000
+            loops: Animation.Infinite; running: true
+        }
+
+        vertexShader:   Qt.resolvedUrl("../Assets/shaders/cloudy/cloudy.vert.qsb")
+        fragmentShader: Qt.resolvedUrl("../Assets/shaders/cloudy/cloudy.frag.qsb")
+    }
+
     ShaderEffectSource {
         id: s3_out
         anchors.fill: parent
@@ -167,15 +145,13 @@ WlrLayershell {
             switch (Dat.Globals.shaderMode) {
                 case "motion":      return s3_motion;
                 case "waterripple": return s3_waterripple;
-                default:            return s2_parallax;
+                case "cloudy":      return s3_cloudy;
+                default:            return s1_out;
             }
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Stage 4 — Circle overlay
-    // ─────────────────────────────────────────────────────────────────────────
-
+    // Stage 3 — Circles overlay
     ShaderEffect {
         id: s4_circles
         anchors.fill: parent
@@ -201,10 +177,6 @@ WlrLayershell {
         visible: false
         hideSource: true
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Trail canvas — cursor trail glyph, sampled by Stage 5
-    // ─────────────────────────────────────────────────────────────────────────
 
     Canvas {
         id: s_trail
@@ -255,13 +227,11 @@ WlrLayershell {
         onTriggered: s_trail.tick(0.016)
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Stage 5 — Final water-ripple pass (rendered to screen)
-    // ─────────────────────────────────────────────────────────────────────────
-
+    // Stage 4 — Water ripple pass
     ShaderEffect {
         id: s5_final
         anchors.fill: parent
+        visible: false
 
         property var  source:          s4_out
         property var  normalMapSource: img_normal
@@ -282,21 +252,37 @@ WlrLayershell {
         fragmentShader: Qt.resolvedUrl("../Assets/shaders/waterripple/waterripple.frag.qsb")
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Mouse tracking — MUST stay here in WallpaperEngine (Background layer).
-    // SidePanel has an input mask so it can't track mouse when menu is closed.
-    // This MouseArea always fires, updating parallax offsets continuously.
-    // ─────────────────────────────────────────────────────────────────────────
+    ShaderEffectSource {
+        id: s5_out
+        sourceItem: s5_final
+        anchors.fill: parent
+        visible: false
+        hideSource: true
+    }
+
+    // Stage 5 — Parallax (final visible output)
+    ShaderEffect {
+        id: s2_parallax
+        anchors.fill: parent
+        visible: true
+
+        property var  source:           s5_out
+        property real offsetX:          Dat.Globals.mouseOffsetX
+        property real offsetY:          Dat.Globals.mouseOffsetY
+        property real parallaxStrength: 0.30
+        property real aspectRatio:      width / height
+
+        vertexShader:   Qt.resolvedUrl("../Assets/shaders/parallax/parallax.vert.qsb")
+        fragmentShader: Qt.resolvedUrl("../Assets/shaders/parallax/parallax.frag.qsb")
+    }
 
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
         onPositionChanged: (mouse) => {
-            // Stage 2: parallax offset (smoothed via Behavior in Globals)
             Dat.Globals.mouseOffsetX = (mouse.x / width  - 0.5) * 2.0;
             Dat.Globals.mouseOffsetY = (mouse.y / height - 0.5) * 2.0;
-            // Stage 5: cursor trail
             s_trail.addPoint(mouse.x, mouse.y);
         }
     }
