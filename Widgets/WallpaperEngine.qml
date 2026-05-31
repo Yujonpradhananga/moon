@@ -28,8 +28,24 @@ WlrLayershell {
     screen: modelData
 
     Image {
-        id: img_depth
-        source: Qt.resolvedUrl("../Assets/moondepth.png")
+        id: img_black
+        source: Qt.resolvedUrl("../Assets/depthmaps/black.png")
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectCrop
+        smooth: true; visible: false
+    }
+
+    Image {
+        id: img_moondepth
+        source: Qt.resolvedUrl("../Assets/depthmaps/moondepth.png")
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectCrop
+        smooth: true; visible: false
+    }
+
+    Image {
+        id: img_moondepth_low
+        source: Qt.resolvedUrl("../Assets/depthmaps/invertdepth.png")
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
         smooth: true; visible: false
@@ -37,7 +53,23 @@ WlrLayershell {
 
     Image {
         id: img_circles
-        source: Qt.resolvedUrl("../Assets/circle.png")
+        source: Qt.resolvedUrl("../Assets/depthmaps/circle.png")
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectCrop
+        smooth: true; visible: false
+    }
+
+    Image {
+        id: img_invert_depth
+        source: Qt.resolvedUrl("../Assets/depthmaps/invertdepth.png")
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectCrop
+        smooth: true; visible: false
+    }
+
+    Image {
+        id: img_nosubject
+        source: Qt.resolvedUrl("../Assets/depthmaps/nosubject.png")
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
         smooth: true; visible: false
@@ -45,7 +77,15 @@ WlrLayershell {
 
     Image {
         id: img_normal
-        source: Qt.resolvedUrl("../Assets/waterripplenormal.png")
+        source: Qt.resolvedUrl("../Assets/normalmaps/waterripplenormal.png")
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectCrop
+        smooth: true; visible: false
+      }
+  
+    Image {
+        id: img_ripple_normal
+        source: Qt.resolvedUrl("../Assets/normalmaps/ripplenormal.png")
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
         smooth: true; visible: false
@@ -76,7 +116,7 @@ WlrLayershell {
         visible: false
 
         property var  source:    s1_out
-        property var  depthMask: img_depth
+        property var  depthMask: img_moondepth
         property real time:      0
         property real strength:  0.006
         property real speed:     2.5
@@ -99,9 +139,9 @@ WlrLayershell {
         property var  source:          s1_out
         property var  normalMapSource: img_normal
         property var  trailMap:        s_trail
-        property var  depthMask:       img_depth
+        property var  depthMask:       img_moondepth
         property real time:            0
-        property real rippleStrength:  0.8
+        property real rippleStrength:  0.9
         property real rippleX:         0.5
         property real rippleY:         0.5
         property real rippleAge:       999.0
@@ -121,7 +161,8 @@ WlrLayershell {
         visible: false
 
         property var  source:    s1_out
-        property var  depthMask: img_depth
+        property var  depthMask: img_invert_depth
+        property var  normalMap: img_normal
         property real time:      0
         property real strength:  0.006
         property real speed:     2.5
@@ -134,6 +175,27 @@ WlrLayershell {
 
         vertexShader:   Qt.resolvedUrl("../Assets/shaders/cloudy/cloudy.vert.qsb")
         fragmentShader: Qt.resolvedUrl("../Assets/shaders/cloudy/cloudy.frag.qsb")
+      }
+
+    ShaderEffect {
+        id: s3_stars
+        anchors.fill: parent
+        visible: false
+
+        property var  source:    s1_out
+        property var  depthMask: img_nosubject
+        property real time:      0
+        property real strength:  50
+        property real speed:     10.5
+        property real frequency: 5.0
+
+        NumberAnimation on time {
+            from: 0; to: 1000; duration: 500000
+            loops: Animation.Infinite; running: true
+        }
+
+        vertexShader:   Qt.resolvedUrl("../Assets/shaders/stars/stars.vert.qsb")
+        fragmentShader: Qt.resolvedUrl("../Assets/shaders/stars/stars.frag.qsb")
     }
 
     ShaderEffectSource {
@@ -149,7 +211,36 @@ WlrLayershell {
                 default:            return s1_out;
             }
         }
+      }
+
+ShaderEffect {
+    id: s3_5_stars
+    anchors.fill: parent
+    visible: false
+
+    property var  source:    s3_out
+    property var  depthMask: img_moondepth
+    property real time:      0
+    property real strength:  50
+    property real speed:     2.5
+    property real frequency: 5.0
+
+    NumberAnimation on time {
+        from: 0; to: 1000; duration: 500000
+        loops: Animation.Infinite; running: true
     }
+
+    vertexShader:   Qt.resolvedUrl("../Assets/shaders/stars/stars.vert.qsb")
+    fragmentShader: Qt.resolvedUrl("../Assets/shaders/stars/stars.frag.qsb")
+}
+
+ShaderEffectSource {
+    id: s3_5_out
+    sourceItem: s3_5_stars
+    anchors.fill: parent
+    visible: false
+    hideSource: true
+}
 
     // Stage 3 — Circles overlay
     ShaderEffect {
@@ -157,7 +248,7 @@ WlrLayershell {
         anchors.fill: parent
         visible: false
 
-        property var  source:     s3_out
+        property var  source:     s3_5_out
         property var  circleMask: img_circles
         property real time:       0
 
@@ -234,9 +325,9 @@ WlrLayershell {
         visible: false
 
         property var  source:          s4_out
-        property var  normalMapSource: img_normal
+        property var  normalMapSource: img_black
         property var  trailMap:        s_trail
-        property var  depthMask:       img_depth
+        property var  depthMask:       img_moondepth
         property real time:            0
         property real rippleStrength:  0.8
         property real rippleX:         0.5
