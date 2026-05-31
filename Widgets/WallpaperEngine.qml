@@ -186,7 +186,7 @@ WlrLayershell {
         property var  depthMask: img_nosubject
         property real time:      0
         property real strength:  50
-        property real speed:     10.5
+        property real speed:     10
         property real frequency: 5.0
 
         NumberAnimation on time {
