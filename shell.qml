@@ -13,17 +13,14 @@ ShellRoot {
       id: scopeRoot
       required property ShellScreen modelData
 
-      // Wallpaper engine (WlrLayershell at Background level)
       Wid.WallpaperEngine {
         modelData: scopeRoot.modelData
       }
 
-      // Side panel — mouse tracking + menu (Top level)
-      Lay.SidePanel {
+      Lay.SideCircle {
         modelData: scopeRoot.modelData
       }
 
-      // Power screen overlay
       Lay.PowerScreen {
         modelData: scopeRoot.modelData
       }
@@ -32,7 +29,7 @@ ShellRoot {
         modelData: scopeRoot.modelData
       }
 
-      Lay.MoonPhaseBar {
+      Lay.BrightnessMoon {
         modelData: modelData
       }
 
