@@ -11,7 +11,7 @@ Singleton {
   property string wifiStatus: "disconnected"
   property string networkName: ""
   property int networkStrength: 0
-
+  property var networks: []
   function toggleWifi() {
     enableWifiProc.command = ["nmcli", "radio", "wifi", wifiEnabled ? "off" : "on"];
     enableWifiProc.running = true;
@@ -20,6 +20,32 @@ Singleton {
   function rescanWifi() {
     rescanProc.running = true;
   }
+
+Process {
+    id: networkListProc
+    command: ["nmcli", "-t", "-f", "SSID,SIGNAL,SECURITY,IN-USE", "dev", "wifi"]
+    stdout: StdioCollector {
+        onStreamFinished: {
+            var lines = text.trim().split("\n")
+            var result = []
+            for (var i = 0; i < lines.length; i++) {
+                var parts = lines[i].split(":")
+                if (parts.length < 4 || parts[0] === "") continue
+                result.push({
+                    ssid:     parts[0],
+                    signal:   parseInt(parts[1]),
+                    security: parts[2] !== "--" && parts[2] !== "",
+                    inUse:    parts[3] === "*"
+                })
+            }
+            root.networks = result
+        }
+    }
+}
+
+function scanNetworks() {
+    networkListProc.running = true
+}
 
   // Monitor network changes
   Process {
@@ -37,6 +63,7 @@ Singleton {
     wifiStatusProc.running = true;
     networkNameProc.running = true;
     networkStrengthProc.running = true;
+    root.scanNetworks()
   }
 
   Process {

@@ -1,6 +1,3 @@
-// QuickTogglesPanel.qml
-// Wi-Fi, Bluetooth, and system toggles panel.
-
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -26,16 +23,87 @@ Item {
       onBack: Dat.Globals.sideMenuView = "main"
     }
 
-    Gen.ToggleRow {
-      Layout.fillWidth: true
-      icon:       "◉"
-      label:      "Wi-Fi"
-      statusText: Dat.Network.wifiEnabled
-        ? (Dat.Network.networkName || "Enabled")
-        : "Disabled"
-      toggled:    Dat.Network.wifiEnabled
-      onClicked:  Dat.Network.toggleWifi()
+Item {
+    Layout.fillWidth: true
+    Layout.preferredHeight: 52
+
+    MouseArea {
+        id: wifiMouse
+        anchors.fill: parent
+        cursorShape: Qt.PointingHandCursor
+        hoverEnabled: true
+onClicked: {
+    console.log("[wifi] clicked, setting view to wifi")
+    Dat.Network.scanNetworks()
+    Dat.Globals.sideMenuView = "wifi"
+}
     }
+
+    Rectangle {
+        anchors.fill: parent
+        anchors.leftMargin: -12
+        anchors.rightMargin: -12
+        color: wifiMouse.containsMouse
+            ? Dat.Colors.withAlpha(Dat.Colors.primary, 0.12)
+            : "transparent"
+        radius: 8
+        Behavior on color { ColorAnimation { duration: 200 } }
+    }
+
+    Rectangle {
+        anchors.top: parent.top; anchors.topMargin: 10
+        anchors.bottom: parent.bottom; anchors.bottomMargin: 10
+        anchors.left: parent.left; anchors.leftMargin: -16
+        width: 3; radius: 2
+        color: Dat.Colors.secondary
+        opacity: wifiMouse.containsMouse ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { duration: 200 } }
+    }
+
+    RowLayout {
+        anchors.fill: parent
+        spacing: 16
+
+        Text {
+            Layout.alignment: Qt.AlignVCenter
+            Layout.preferredWidth: 24
+            horizontalAlignment: Text.AlignHCenter
+            font.pixelSize: 16
+            color: wifiMouse.containsMouse ? Dat.Colors.secondaryBright : Dat.Colors.primaryDim
+            text: "◉"
+            Behavior on color { ColorAnimation { duration: 200 } }
+        }
+
+        ColumnLayout {
+            Layout.alignment: Qt.AlignVCenter
+            Layout.fillWidth: true
+            spacing: 1
+
+            Text {
+                Layout.fillWidth: true
+                font.family: "Inter"
+                font.letterSpacing: 1.5
+                font.pixelSize: 15
+                font.weight: wifiMouse.containsMouse ? Font.Normal : Font.Light
+                color: wifiMouse.containsMouse ? Dat.Colors.foreground : Dat.Colors.foregroundMuted
+                text: "Wi-Fi"
+                Behavior on color { ColorAnimation { duration: 200 } }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                font.family: "Inter"
+                font.pixelSize: 11
+                font.weight: Font.Light
+                color: Dat.Colors.foregroundMuted
+                opacity: 0.7
+                text: Dat.Network.wifiEnabled
+                    ? (Dat.Network.networkName || "Enabled")
+                    : "Disabled"
+            }
+        }
+    }
+}
 
     Gen.ToggleRow {
       Layout.fillWidth: true
@@ -49,68 +117,23 @@ Item {
       onClicked:  Dat.Bluetooth.toggle()
     }
 
-Gen.ToggleRow {
-  id: nightLight
-  Layout.fillWidth: true
-  icon:       "☾"
-  label:      "Night Light"
-  statusText: toggled ? "On" : "Off"
-  toggled:    false
-  onClicked: {
-    toggled = !toggled
-    const shader = toggled
-      ? "/home/yujon/.config/hypr/Shaders/bluelight.frag"
-      : "/home/yujon/.config/hypr/Shaders/vibrant.glsl"
-    Quickshell.execDetached(["hyprctl", "eval",
-      "hl.config({ decoration = { screen_shader = \"" + shader + "\" } })"])
-  }
-}
-
     Gen.ToggleRow {
-      id: dnd
+      id: nightLight
       Layout.fillWidth: true
-      icon:       "◯"
-      label:      "Do Not Disturb"
+      icon:       "☾"
+      label:      "Night Light"
       statusText: toggled ? "On" : "Off"
       toggled:    false
       onClicked: {
-        toggled = !toggled;
-        Quickshell.execDetached(["bash", "-c",
-          toggled
-            ? "makoctl set-mode do-not-disturb 2>/dev/null; swaync-client -d 2>/dev/null"
-            : "makoctl set-mode default 2>/dev/null; swaync-client -D 2>/dev/null"]);
+        toggled = !toggled
+        const shader = toggled
+          ? "/home/yujon/.config/hypr/Shaders/bluelight.frag"
+          : "/home/yujon/.config/hypr/Shaders/vibrant.glsl"
+        Quickshell.execDetached(["hyprctl", "eval",
+          "hl.config({ decoration = { screen_shader = \"" + shader + "\" } })"])
       }
     }
 
-    Gen.ToggleRow {
-      id: idleInhibit
-      Layout.fillWidth: true
-      icon:       "☀"
-      label:      "Idle Inhibitor"
-      statusText: toggled ? "Screen stays on" : "Off"
-      toggled:    false
-      onClicked: {
-        toggled = !toggled;
-        Quickshell.execDetached(["bash", "-c",
-          toggled
-            ? "pidof wayland-idle-inhibitor.py || wayland-idle-inhibitor.py &"
-            : "pkill -f wayland-idle-inhibitor"]);
-      }
-    }
-
-    Gen.ToggleRow {
-      id: gameMode
-      Layout.fillWidth: true
-      icon:       "▣"
-      label:      "Game Mode"
-      statusText: toggled ? "Active" : "Off"
-      toggled:    false
-      onClicked: {
-        toggled = !toggled;
-        Quickshell.execDetached(["bash", "-c",
-          "gamemoded -" + (toggled ? "r" : "d") + " 2>/dev/null"]);
-      }
-    }
 
     Item { Layout.fillHeight: true; Layout.fillWidth: true }
 

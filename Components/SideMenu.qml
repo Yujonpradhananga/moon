@@ -5,6 +5,7 @@ import Caelestia.Blobs
 import Qt5Compat.GraphicalEffects
 import qs.Data as Dat
 import qs.Widgets as Wid
+import qs.Generics as Gen
 
 Item {
   id: root
@@ -353,6 +354,148 @@ Item {
       }
     }
   }
+
+
+BlobRect {
+    id: wifiBlob
+    group: menuBlobGroup
+    width: root.menuWidth
+    height: parent.height
+    x: root.currentView === "wifi" ? 0 : root.menuWidth
+    radius: 0
+    stiffness: 0
+    damping: 24
+    deformScale: 1.0002
+    Behavior on x {
+        NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
+    }
+
+    opacity: root.currentView === "wifi" ? 1.0 : 0.0
+    visible: opacity > 0
+    Behavior on opacity {
+        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+    }
+
+    ColumnLayout {
+        anchors {
+            fill: parent
+            leftMargin: 40; rightMargin: 40
+            topMargin: 80;  bottomMargin: 60
+        }
+        spacing: 8
+
+        Gen.PanelHeader {
+            Layout.fillWidth: true
+            Layout.bottomMargin: 24
+            title: "W I - F I"
+            onBack: Dat.Globals.sideMenuView = "toggles"
+        }
+
+        Repeater {
+            model: Dat.Network.networks
+
+            delegate: Item {
+                id: netItem
+                required property var modelData
+                Layout.fillWidth: true
+                Layout.preferredHeight: 52
+
+                MouseArea {
+                    id: netMouse
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
+                    onClicked: {
+                        Quickshell.execDetached([
+                            "nmcli", "dev", "wifi", "connect", netItem.modelData.ssid
+                        ])
+                    }
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.leftMargin: -12
+                    anchors.rightMargin: -12
+                    color: netMouse.containsMouse
+                        ? Dat.Colors.withAlpha(Dat.Colors.primary, 0.12)
+                        : "transparent"
+                    radius: 8
+                    Behavior on color { ColorAnimation { duration: 200 } }
+                }
+
+                Rectangle {
+                    anchors.top: parent.top; anchors.topMargin: 10
+                    anchors.bottom: parent.bottom; anchors.bottomMargin: 10
+                    anchors.left: parent.left; anchors.leftMargin: -16
+                    width: 3; radius: 2
+                    color: Dat.Colors.secondary
+                    opacity: netItem.modelData.inUse ? 1.0 : 0.0
+                    Behavior on opacity { NumberAnimation { duration: 200 } }
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    spacing: 16
+
+                    Text {
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.preferredWidth: 24
+                        horizontalAlignment: Text.AlignHCenter
+                        font.pixelSize: 16
+                        color: netItem.modelData.inUse
+                            ? Dat.Colors.secondaryBright
+                            : Dat.Colors.primaryDim
+                        text: netItem.modelData.signal > 66 ? "▲"
+                            : netItem.modelData.signal > 33 ? "△"
+                            : "▽"
+                        Behavior on color { ColorAnimation { duration: 200 } }
+                    }
+
+                    ColumnLayout {
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.fillWidth: true
+                        spacing: 1
+
+                        Text {
+                            Layout.fillWidth: true
+                            font.family: "Inter"
+                            font.letterSpacing: 1.5
+                            font.pixelSize: 15
+                            font.weight: netItem.modelData.inUse ? Font.Normal : Font.Light
+                            color: netItem.modelData.inUse
+                                ? Dat.Colors.foreground
+                                : Dat.Colors.foregroundMuted
+                            text: netItem.modelData.ssid
+                            Behavior on color { ColorAnimation { duration: 200 } }
+                        }
+
+                        Text {
+                            Layout.fillWidth: true
+                            font.family: "Inter"
+                            font.pixelSize: 11
+                            font.weight: Font.Light
+                            color: Dat.Colors.foregroundMuted
+                            opacity: 0.7
+                            text: netItem.modelData.inUse ? "Connected"
+                                : netItem.modelData.security ? "Secured"
+                                : "Open"
+                        }
+                    }
+                }
+            }
+        }
+
+        Item { Layout.fillHeight: true; Layout.fillWidth: true }
+
+        Text {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.bottomMargin: 20
+            color: Dat.Colors.withAlpha(Dat.Colors.primary, 0.25)
+            font.pixelSize: 28
+            text: "🌙"
+        }
+    }
+}
 
   ParticleSystem {
     id: starSystem
