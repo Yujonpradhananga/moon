@@ -56,15 +56,13 @@ Item {
       duration: 280; easing.type: Easing.OutCubic
     }
   }
+
   Canvas {
     id: irisCanvas
     anchors.fill: parent
     visible: false
-
     property real radius: root.irisRadius
-
     onRadiusChanged: requestPaint()
-
     onPaint: {
       const ctx = getContext("2d")
       ctx.clearRect(0, 0, width, height)
@@ -92,19 +90,16 @@ Item {
     id: backdrop
     anchors.fill: parent
     color: "transparent"
-
     Rectangle {
       anchors.fill: parent
-      color: Dat.Colors.withAlpha(Dat.Colors.background, 0.60)
+      color: Dat.Colors.withAlpha(Dat.Colors.background, 0.10)
       radius: 0
-
       Rectangle {
         anchors.bottom: parent.bottom
         anchors.right: parent.right
         anchors.top: parent.top
         color: "transparent"
         width: 2
-
         gradient: Gradient {
           GradientStop { color: "#00ffffff"; position: 0.0 }
           GradientStop { color: "#55ffffff"; position: 0.3 }
@@ -122,21 +117,15 @@ Item {
     smoothing: 8
   }
 
-  BlobRect {
+  // Main menu panel
+  Item {
     id: mainMenuBlob
-    group: menuBlobGroup
     width: root.menuWidth
     height: parent.height
     x: root.currentView === "main" ? 0 : -root.menuWidth
-    radius: 0
-    stiffness: 00
-    damping: 24
-    deformScale: 1.0002
-
     Behavior on x {
       NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
     }
-
     ColumnLayout {
       anchors.bottom: parent.bottom
       anchors.bottomMargin: 60
@@ -147,18 +136,15 @@ Item {
       anchors.top: parent.top
       anchors.topMargin: 80
       spacing: 8
-
       Item {
         Layout.bottomMargin: 40
         Layout.fillWidth: true
         Layout.preferredHeight: titleColumn.height
-
         ColumnLayout {
           id: titleColumn
           anchors.left: parent.left
           anchors.right: parent.right
           spacing: 8
-
           Text {
             Layout.fillWidth: true
             color: Dat.Colors.secondaryBright
@@ -167,7 +153,6 @@ Item {
             layer.enabled: true
             layer.effect: null
           }
-
           Text {
             Layout.fillWidth: true
             color: Dat.Colors.foreground
@@ -177,7 +162,6 @@ Item {
             font.weight: Font.Light
             text: "M O O N S H E L L"
           }
-
           Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 1
@@ -186,7 +170,6 @@ Item {
           }
         }
       }
-
       Repeater {
         model: ListModel {
           ListElement { icon: "▸"; label: "Continue" }
@@ -196,23 +179,18 @@ Item {
           ListElement { icon: "▣"; label: "Terminal" }
           ListElement { icon: "◉"; label: "Power" }
         }
-
         delegate: Item {
           id: menuItem
-
           required property int index
           required property string icon
           required property string label
-
           Layout.fillWidth: true
           Layout.preferredHeight: 52
-
           MouseArea {
             id: itemMouse
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             hoverEnabled: true
-
             onClicked: {
               console.log("[MoonShell] Menu clicked: " + menuItem.label)
               if (menuItem.label === "Power") {
@@ -226,34 +204,9 @@ Item {
               }
             }
           }
-
-          Rectangle {
-            anchors.fill: parent
-            anchors.leftMargin: -12
-            anchors.rightMargin: -12
-            color: itemMouse.containsMouse ? Dat.Colors.withAlpha(Dat.Colors.primary, 0.12) : "transparent"
-            radius: 8
-            Behavior on color { ColorAnimation { duration: 200 } }
-          }
-
-          Rectangle {
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 10
-            anchors.left: parent.left
-            anchors.leftMargin: -16
-            anchors.top: parent.top
-            anchors.topMargin: 10
-            color: Dat.Colors.secondary
-            opacity: itemMouse.containsMouse ? 1.0 : 0.0
-            radius: 2
-            width: 3
-            Behavior on opacity { NumberAnimation { duration: 200 } }
-          }
-
           RowLayout {
             anchors.fill: parent
             spacing: 16
-
             Text {
               Layout.alignment: Qt.AlignVCenter
               Layout.preferredWidth: 24
@@ -263,7 +216,6 @@ Item {
               text: menuItem.icon
               Behavior on color { ColorAnimation { duration: 200 } }
             }
-
             Text {
               Layout.alignment: Qt.AlignVCenter
               Layout.fillWidth: true
@@ -278,12 +230,7 @@ Item {
           }
         }
       }
-
-      Item {
-        Layout.fillHeight: true
-        Layout.fillWidth: true
-      }
-
+      Item { Layout.fillHeight: true; Layout.fillWidth: true }
       Text {
         Layout.alignment: Qt.AlignHCenter
         Layout.bottomMargin: 20
@@ -307,201 +254,42 @@ Item {
     }
   }
 
-  BlobRect {
-    id: togglesBlob
-    group: menuBlobGroup
-    width: root.menuWidth
-    height: parent.height
-    x: root.currentView === "toggles" ? 0 : root.menuWidth
-    radius: 0
-    stiffness: 00
-    damping: 24
-    deformScale: 1.0002
-    Behavior on x {
-      NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
-    }
-
-    Wid.QuickTogglesPanel {
-      anchors.fill: parent
-      opacity: root.currentView === "toggles" ? 1.0 : 0.0
-      visible: opacity > 0
-      Behavior on opacity {
-        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
-      }
-    }
+  // Toggles panel
+Item {
+  id: togglesBlob
+  width: root.menuWidth
+  height: parent.height
+  x: root.currentView === "toggles" ? 0 : root.menuWidth
+  Behavior on x {
+    NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
   }
-
-  BlobRect {
-    id: settingsBlob
-    group: menuBlobGroup
-    width: root.menuWidth
-    height: parent.height
-    x: root.currentView === "settings" ? 0 : root.menuWidth
-    radius: 0
-    stiffness: 00
-    damping: 24
-    deformScale: 1.0002
-    Behavior on x {
-      NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
-    }
-
-    Wid.ShaderPicker {
-      anchors.fill: parent
-      opacity: root.currentView === "settings" ? 1.0 : 0.0
-      visible: opacity > 0
-      Behavior on opacity {
-        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
-      }
-    }
-  }
-
-
-BlobRect {
-    id: wifiBlob
-    group: menuBlobGroup
-    width: root.menuWidth
-    height: parent.height
-    x: root.currentView === "wifi" ? 0 : root.menuWidth
-    radius: 0
-    stiffness: 0
-    damping: 24
-    deformScale: 1.0002
-    Behavior on x {
-        NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
-    }
-
-    opacity: root.currentView === "wifi" ? 1.0 : 0.0
+  Wid.QuickTogglesPanel {
+    anchors.fill: parent
+    opacity: root.currentView === "toggles" ? 1.0 : 0.0
     visible: opacity > 0
     Behavior on opacity {
-        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+      NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
     }
-
-    ColumnLayout {
-        anchors {
-            fill: parent
-            leftMargin: 40; rightMargin: 40
-            topMargin: 80;  bottomMargin: 60
-        }
-        spacing: 8
-
-        Gen.PanelHeader {
-            Layout.fillWidth: true
-            Layout.bottomMargin: 24
-            title: "W I - F I"
-            onBack: Dat.Globals.sideMenuView = "toggles"
-        }
-
-        Repeater {
-            model: Dat.Network.networks
-
-            delegate: Item {
-                id: netItem
-                required property var modelData
-                Layout.fillWidth: true
-                Layout.preferredHeight: 52
-
-                MouseArea {
-                    id: netMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onClicked: {
-                        Quickshell.execDetached([
-                            "nmcli", "dev", "wifi", "connect", netItem.modelData.ssid
-                        ])
-                    }
-                }
-
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.leftMargin: -12
-                    anchors.rightMargin: -12
-                    color: netMouse.containsMouse
-                        ? Dat.Colors.withAlpha(Dat.Colors.primary, 0.12)
-                        : "transparent"
-                    radius: 8
-                    Behavior on color { ColorAnimation { duration: 200 } }
-                }
-
-                Rectangle {
-                    anchors.top: parent.top; anchors.topMargin: 10
-                    anchors.bottom: parent.bottom; anchors.bottomMargin: 10
-                    anchors.left: parent.left; anchors.leftMargin: -16
-                    width: 3; radius: 2
-                    color: Dat.Colors.secondary
-                    opacity: netItem.modelData.inUse ? 1.0 : 0.0
-                    Behavior on opacity { NumberAnimation { duration: 200 } }
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    spacing: 16
-
-                    Text {
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.preferredWidth: 24
-                        horizontalAlignment: Text.AlignHCenter
-                        font.pixelSize: 16
-                        color: netItem.modelData.inUse
-                            ? Dat.Colors.secondaryBright
-                            : Dat.Colors.primaryDim
-                        text: netItem.modelData.signal > 66 ? "▲"
-                            : netItem.modelData.signal > 33 ? "△"
-                            : "▽"
-                        Behavior on color { ColorAnimation { duration: 200 } }
-                    }
-
-                    ColumnLayout {
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.fillWidth: true
-                        spacing: 1
-
-                        Text {
-                            Layout.fillWidth: true
-                            font.family: "Inter"
-                            font.letterSpacing: 1.5
-                            font.pixelSize: 15
-                            font.weight: netItem.modelData.inUse ? Font.Normal : Font.Light
-                            color: netItem.modelData.inUse
-                                ? Dat.Colors.foreground
-                                : Dat.Colors.foregroundMuted
-                            text: netItem.modelData.ssid
-                            Behavior on color { ColorAnimation { duration: 200 } }
-                        }
-
-                        Text {
-                            Layout.fillWidth: true
-                            font.family: "Inter"
-                            font.pixelSize: 11
-                            font.weight: Font.Light
-                            color: Dat.Colors.foregroundMuted
-                            opacity: 0.7
-                            text: netItem.modelData.inUse ? "Connected"
-                                : netItem.modelData.security ? "Secured"
-                                : "Open"
-                        }
-                    }
-                }
-            }
-        }
-
-        Item { Layout.fillHeight: true; Layout.fillWidth: true }
-
-        Text {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.bottomMargin: 20
-            color: Dat.Colors.withAlpha(Dat.Colors.primary, 0.25)
-            font.pixelSize: 28
-            text: "🌙"
-        }
-    }
+  }
 }
 
+  // Settings panel
+  SideMenuSettings {
+    menuWidth: root.menuWidth
+    currentView: root.currentView
+  }
+
+  // Wi-Fi panel
+  SideMenuWifi {
+    menuWidth: root.menuWidth
+    currentView: root.currentView
+  }
+
+  // Particle system
   ParticleSystem {
     id: starSystem
     anchors.fill: parent
     running: root.isOpen
-
     ImageParticle {
       groups: ["star"]
       source: "qrc:///particleresources/star.png"
@@ -513,7 +301,6 @@ BlobRect {
       autoRotation: false
       entryEffect: ImageParticle.Fade
     }
-
     Emitter {
       id: starEmitter
       group: "star"
@@ -527,20 +314,17 @@ BlobRect {
       size: 28
       sizeVariation: 20
       endSize: 4
-
       velocity: AngleDirection {
         angle: 90
         angleVariation: 22
         magnitude: 150
         magnitudeVariation: 60
       }
-
       acceleration: AngleDirection {
         angle: 90
         magnitude: 50
       }
     }
-
     Timer {
       id: burstTimer
       interval: 700
@@ -548,7 +332,6 @@ BlobRect {
       repeat: false
       onTriggered: starEmitter.emitRate = 0
     }
-
     Connections {
       target: root
       function onIsOpenChanged() {

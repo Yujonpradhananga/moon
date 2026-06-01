@@ -31,13 +31,6 @@ Item {
     }
   ]
 
-  // Blob group — selection indicator morphs liquidly between options
-  BlobGroup {
-    id: blobGroup
-    color: Dat.Colors.withAlpha(Dat.Colors.background, 0.60)
-    smoothing: 20
-  }
-
   ColumnLayout {
     anchors {
       fill: parent
@@ -81,15 +74,14 @@ Item {
 
         readonly property bool isActive: Dat.Globals.shaderMode === effectRow.modelData.id
 
-        // Blob fill — liquid morph when selection changes
-        BlobRect {
+        Rectangle {
           anchors { fill: parent; leftMargin: -12; rightMargin: -12 }
-          group:       blobGroup
-          radius:      12
-          stiffness:   180
-          damping:     16
-          deformScale: 0.0008
-          visible:     effectRow.isActive
+          color:        Dat.Colors.withAlpha(Dat.Colors.primary, 0.12)
+          border.color: Dat.Colors.withAlpha(Dat.Colors.primary, 0.3)
+          border.width: 1
+          radius:       12
+          visible:      effectRow.isActive
+          Behavior on color { ColorAnimation { duration: 200 } }
         }
 
         // Hover border when not selected
