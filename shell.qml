@@ -29,10 +29,13 @@ ShellRoot {
       }
 
       Lay.SystemTray {
-              modelData: scopeRoot.modelData
-            }
+        modelData: scopeRoot.modelData
+      }
 
-      // Cava visualizer
+      Lay.MoonPhaseBar {
+        modelData: modelData
+      }
+
       Lay.Cava {
         modelData: scopeRoot.modelData
       }
