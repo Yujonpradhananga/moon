@@ -15,30 +15,24 @@ Item {
 
   clip: true
   height: parent.height
-width: isOpen ? menuWidth : 0
-Behavior on width {
-  NumberAnimation { duration: 480; easing.type: Easing.OutCubic }
-}
-
-  // Always in place — iris mask handles visibility
+  width: isOpen ? menuWidth : 0
+  Behavior on width {
+    NumberAnimation { duration: 480; easing.type: Easing.OutCubic }
+  }
   x: 0
   opacity: 1.0
-visible: irisRadius > 0 || opacity > 0
-
-  // Iris wipe radius — 0 = fully closed, irisMax = fully open
+  visible: irisRadius > 0 || opacity > 0
   readonly property real irisMax: Math.sqrt(menuWidth * menuWidth + height * height) / 2 + 10
   property real irisRadius: 0
-
-onIsOpenChanged: {
-  if (isOpen) {
-    root.opacity = 1.0
-    irisOpenAnim.restart()
-  } else {
-    irisCloseAnim.restart()
-    Dat.Globals.sideMenuView = "main"
+  onIsOpenChanged: {
+    if (isOpen) {
+      root.opacity = 1.0
+      irisOpenAnim.restart()
+    } else {
+      irisCloseAnim.restart()
+      Dat.Globals.sideMenuView = "main"
+    }
   }
-}
-
   NumberAnimation {
     id: irisOpenAnim
     target: root
@@ -48,22 +42,19 @@ onIsOpenChanged: {
     duration: 480
     easing.bezierCurve: Dat.Easing.emphasizedDecel
   }
-
-ParallelAnimation {
-  id: irisCloseAnim
-  NumberAnimation {
-    target: root; property: "irisRadius"
-    from: root.irisMax; to: 0
-    duration: 340; easing.bezierCurve: Dat.Easing.emphasizedAccel
+  ParallelAnimation {
+    id: irisCloseAnim
+    NumberAnimation {
+      target: root; property: "irisRadius"
+      from: root.irisMax; to: 0
+      duration: 340; easing.bezierCurve: Dat.Easing.emphasizedAccel
+    }
+    NumberAnimation {
+      target: root; property: "opacity"
+      from: 1.0; to: 0.0
+      duration: 280; easing.type: Easing.OutCubic
+    }
   }
-  NumberAnimation {
-    target: root; property: "opacity"
-    from: 1.0; to: 0.0
-    duration: 280; easing.type: Easing.OutCubic
-  }
-}
-
-  // Iris mask drawn via Canvas
   Canvas {
     id: irisCanvas
     anchors.fill: parent

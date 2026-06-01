@@ -59,8 +59,6 @@ WlrLayershell {
       Dat.Globals.sideMenuView = "main"
     }
   }
-
-
   Item {
     id: contentArea
     anchors.fill: parent
