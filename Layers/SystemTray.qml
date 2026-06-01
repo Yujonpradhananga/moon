@@ -68,7 +68,7 @@ WlrLayershell {
 
     Video {
       id: bgVideo
-      source: Qt.resolvedUrl("../Assets/videos/raani.mp4")
+      source: Qt.resolvedUrl("../Assets/videos/output.mp4")
       anchors.fill: parent
       fillMode: VideoOutput.PreserveAspectCrop
       loops: MediaPlayer.Infinite
