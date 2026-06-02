@@ -5,6 +5,7 @@ import Quickshell
 import QtQuick
 import qs.Layers as Lay
 import qs.Widgets as Wid
+import qs.Components as Comp
 
 ShellRoot {
   Variants {
@@ -25,18 +26,21 @@ ShellRoot {
         modelData: scopeRoot.modelData
       }
 
-      Lay.SystemTray {
-        modelData: scopeRoot.modelData
-      }
 
       Lay.BrightnessMoon {
+        modelData: modelData
+      }
+
+      Lay.VolumeMoon {
         modelData: modelData
       }
 
       Lay.Cava {
         modelData: scopeRoot.modelData
       }
-
+Comp.SideMenuApps {
+  modelData: scopeRoot.modelData
+}
       Connections {
         function onReloadCompleted() {
           Quickshell.inhibitReloadPopup();

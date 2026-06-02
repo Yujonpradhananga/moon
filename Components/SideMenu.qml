@@ -92,7 +92,7 @@ Item {
     color: "transparent"
     Rectangle {
       anchors.fill: parent
-      color: Dat.Colors.withAlpha(Dat.Colors.background, 0.10)
+      color: Dat.Colors.withAlpha(Dat.Colors.background, 0.00)
       radius: 0
       Rectangle {
         anchors.bottom: parent.bottom
@@ -201,6 +201,8 @@ Item {
                 Dat.Globals.sideMenuView = "settings"
               } else if (menuItem.label === "Files") {
                 Dat.Globals.sideMenuView = "files"
+              } else if (menuItem.label === "Terminal") {
+                Dat.Globals.sideMenuView = "sysinfo"
               }
             }
           }
@@ -272,6 +274,25 @@ Item {
     }
   }
 }
+
+  Item {
+      id: sysinfoBlob
+      width: root.menuWidth
+      height: parent.height
+      x: root.currentView === "sysinfo" ? 0 : root.menuWidth
+      Behavior on x {
+          NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
+      }
+      SideMenuSystemInfo {
+          anchors.fill: parent
+          opacity: root.currentView === "sysinfo" ? 1.0 : 0.0
+          visible: opacity > 0
+          Behavior on opacity {
+              NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+          }
+      }
+    }
+
 
   // Settings panel
   SideMenuSettings {

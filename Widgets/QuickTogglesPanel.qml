@@ -133,7 +133,22 @@ onClicked: {
           "hl.config({ decoration = { screen_shader = \"" + shader + "\" } })"])
       }
     }
-
+    Gen.ToggleRow {
+      id: grayscale
+      Layout.fillWidth: true
+      icon: "◑"
+      label: "Grayscale"
+      statusText: toggled ? "On" : "Off"
+      toggled: false
+      onClicked: {
+        toggled = !toggled
+        const shader = toggled
+          ? "/home/yujon/.config/hypr/Shaders/grey.glsl"
+          : "/home/yujon/.config/hypr/Shaders/vibrant.glsl"
+        Quickshell.execDetached(["hyprctl", "eval",
+          "hl.config({ decoration = { screen_shader = \"" + shader + "\" } })"])
+      }
+    }
 
     Item { Layout.fillHeight: true; Layout.fillWidth: true }
 

@@ -44,7 +44,7 @@ Behavior on implicitWidth {
     id: circleRegion
     x: 0
     y: circleZone.y + (circleZone.height - layerRoot.circleSize) / 2 - 20
-    width: Math.max(8, circle.x + circleZone.dragX + layerRoot.circleSize + 16)
+    width: Math.max(8, circle.x + circleZone.dragX + layerRoot.circleSize + 10)
     height: layerRoot.circleSize + 40
   }
 
