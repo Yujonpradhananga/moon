@@ -4,11 +4,12 @@ import Quickshell
 import Quickshell.Wayland
 import qs.Data as Dat
 import qs.Widgets as Wid
-import qs.Layers as Lay
 
 WlrLayershell {
   id: layerRoot
+
   required property ShellScreen modelData
+
   anchors.bottom: true
   anchors.left: true
   anchors.right: true
@@ -95,12 +96,88 @@ WlrLayershell {
       }
     }
 
-    Lay.LunarClockFace {
+    ColumnLayout {
       anchors.centerIn: parent
-      anchors.verticalCenterOffset: -60
-      scale: 1.3
-      faceColor: Dat.Colors.primary
+      spacing: 8
       z: 1
+
+      Text {
+        Layout.alignment: Qt.AlignHCenter
+        color: Dat.Colors.withAlpha(Dat.Colors.primary, 0.6)
+        font.pixelSize: 80
+        text: "☽"
+      }
+
+      Repeater {
+        model: ListModel {
+          ListElement { icon: "⏻"; label: "Power Off"; cmd: "poweroff" }
+          ListElement { icon: "↺"; label: "Restart";   cmd: "reboot" }
+          ListElement { icon: "⏾"; label: "Sleep";     cmd: "systemctl suspend" }
+        }
+
+        delegate: Item {
+          id: powerItem
+          required property string icon
+          required property string label
+          required property string cmd
+
+          Layout.preferredWidth: 280
+          Layout.preferredHeight: 56
+
+          MouseArea {
+            id: itemMouse
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            hoverEnabled: true
+            onClicked: Quickshell.execDetached(["sh", "-c", powerItem.cmd])
+          }
+
+          Rectangle {
+            anchors.fill: parent
+            anchors.leftMargin: -12
+            anchors.rightMargin: -12
+            color: itemMouse.containsMouse
+              ? Dat.Colors.withAlpha(Dat.Colors.primary, 0.12)
+              : "transparent"
+            radius: 8
+            Behavior on color { ColorAnimation { duration: 200 } }
+          }
+
+          Rectangle {
+            anchors.top: parent.top; anchors.topMargin: 10
+            anchors.bottom: parent.bottom; anchors.bottomMargin: 10
+            anchors.left: parent.left; anchors.leftMargin: -16
+            width: 3; radius: 2
+            color: Dat.Colors.secondary
+            opacity: itemMouse.containsMouse ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { duration: 200 } }
+          }
+
+RowLayout {
+  anchors.centerIn: parent
+  spacing: 16
+
+  Text {
+    Layout.alignment: Qt.AlignVCenter
+    color: itemMouse.containsMouse ? Dat.Colors.secondaryBright : Dat.Colors.primaryDim
+    font.pixelSize: 20
+    text: powerItem.icon
+    Behavior on color { ColorAnimation { duration: 200 } }
+  }
+
+  Text {
+    Layout.alignment: Qt.AlignVCenter
+    color: itemMouse.containsMouse ? Dat.Colors.foreground : Dat.Colors.foregroundMuted
+    font.family: "Inter"
+    font.letterSpacing: 1.5
+    font.pixelSize: 18
+    font.weight: itemMouse.containsMouse ? Font.Normal : Font.Light
+    text: powerItem.label
+    Behavior on color { ColorAnimation { duration: 200 } }
+  }
+}
+        }
+      }
     }
 
     MouseArea {

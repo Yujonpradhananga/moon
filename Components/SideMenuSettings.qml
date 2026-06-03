@@ -6,10 +6,10 @@ import qs.Widgets as Wid
 
 BlobRect {
   id: root
-
+  required property var group
   required property real menuWidth
   required property string currentView
-
+  group: root.group
   width: menuWidth
   height: parent.height
   x: currentView === "settings" ? 0 : menuWidth
@@ -17,11 +17,9 @@ BlobRect {
   stiffness: 0
   damping: 24
   deformScale: 1.0002
-
   Behavior on x {
     NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
   }
-
   Wid.ShaderPicker {
     anchors.fill: parent
     opacity: root.currentView === "settings" ? 1.0 : 0.0
