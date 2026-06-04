@@ -17,35 +17,30 @@ ShellRoot {
       Wid.WallpaperEngine {
         modelData: scopeRoot.modelData
       }
-
       Lay.SideCircle {
         modelData: scopeRoot.modelData
       }
-
       Lay.PowerScreen {
         modelData: scopeRoot.modelData
       }
-Lay.MediaPlayer { modelData: modelData }
-
       Lay.Shangles {
         modelData: scopeRoot.modelData
       }
-
-
       Lay.BrightnessMoon {
         modelData: modelData
       }
-
       Lay.VolumeMoon {
         modelData: modelData
       }
-
       Lay.Cava {
         modelData: scopeRoot.modelData
       }
-Comp.SideMenuApps {
-  modelData: scopeRoot.modelData
-}
+      Comp.SideMenuApps {
+        modelData: scopeRoot.modelData
+      }
+      Comp.Bar {
+        modelData: scopeRoot.modelData
+      }
       Connections {
         function onReloadCompleted() {
           Quickshell.inhibitReloadPopup();

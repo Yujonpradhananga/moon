@@ -19,4 +19,5 @@ Singleton {
   property string sideMenuView: "main"
   property bool powerScreenVisible: false
   property string shaderMode: "motion"
+  property bool shanglesOpen: false
 }

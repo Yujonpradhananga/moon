@@ -4,6 +4,8 @@ import QtQuick.Particles
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
+import qs.Data as Dat
+import qs.Widgets as Wid
 
 WlrLayershell {
     id: root
@@ -18,199 +20,84 @@ WlrLayershell {
     surfaceFormat.opaque: false
 
     anchors.top: true
+    anchors.left: true
     anchors.right: true
-    implicitWidth: 500
     implicitHeight: 390
 
+    // ── State ──────────────────────────────────────────────────────────────
     property bool shown: false
     property bool everShown: false
-    property real ropeOffsetY: 0
 
-    Behavior on ropeOffsetY {
-        NumberAnimation { duration: 350; easing.type: Easing.InCubic }
-    }
+    readonly property int  barHeight:    46
+    readonly property real centerOffset: (root.width - 460) / 2
 
+    // Ropes hang from bar bottom when shown, retract above screen when hidden
+    property real ropeOffsetY: -implicitHeight
     onShownChanged: {
-        ropeOffsetY = shown ? 0 : -implicitHeight
+        ropeOffsetY = shown ? barHeight : -implicitHeight
     }
 
-    mask: Region {
-        regions: root.shown ? [fullRegion] : [hotZoneRegion]
+    // ── Window-presence detection (same as Bar / MediaPlayer) ──────────────
+    readonly property HyprlandMonitor hyprMonitor: Hyprland.monitorFor(root.screen)
+    readonly property bool hasWindows: (root.hyprMonitor?.activeWorkspace?.lastIpcObject?.windows ?? 0) > 0
+
+    onHasWindowsChanged: {
+        if (hasWindows && root.shown) {
+            root.shown = false
+            Dat.Globals.shanglesOpen = false
+        }
     }
-    Region { id: hotZoneRegion; x: 0; y: 0; width: root.implicitWidth; height: 50 }
-    Region { id: fullRegion;    x: 0; y: 0; width: root.implicitWidth; height: root.implicitHeight }
+
+    Connections {
+        target: Hyprland
+        function onRawEvent(event: HyprlandEvent): void {
+            const n = event.name
+            if (n.includes("window") || n.includes("workspace") || n.includes("mon")) {
+                Hyprland.refreshWorkspaces()
+                Hyprland.refreshMonitors()
+            }
+        }
+    }
+
+    // ── Toggle via clock click ─────────────────────────────────────────────
+    readonly property bool globallyTriggered: Dat.Globals.shanglesOpen
+    onGloballyTriggeredChanged: {
+        if (globallyTriggered) {
+            shown = true               // triggers ropeOffsetY = barHeight
+            ropePhysics.init()         // inits ropes at correct Y
+            if (!everShown) {
+                everShown = true
+                burstSystem.running = true
+                burstEmitter.burst(55)
+                burstStop.restart()
+            }
+        } else {
+            shown = false              // immediate close on second click
+        }
+    }
 
     readonly property var ropeDefs: [
-        { ax: 69,  segs: 12, icon: "󰽧", isz: 26 },
-        { ax: 128, segs: 9,  icon: "★",  isz: 26 },
-        { ax: 180, segs: 15, icon: "󰽧", isz: 26 },
-        { ax: 233, segs: 10, icon: "★",  isz: 26 },
-        { ax: 288, segs: 16, icon: "",   isz: 26 },
-        { ax: 342, segs: 8,  icon: "★",  isz: 26 },
-        { ax: 395, segs: 13, icon: "󰽧", isz: 26 },
-        { ax: 450, segs: 10, icon: "★",  isz: 26 },
-        { ax: 495, segs: 11, icon: "󰽧", isz: 26 },
+        { ax: 15,  segs: 12, icon: "󰽧", isz: 26 },
+        { ax: 65,  segs: 9,  icon: "★",  isz: 26 },
+        { ax: 117, segs: 15, icon: "󰽧", isz: 26 },
+        { ax: 170, segs: 10, icon: "★",  isz: 26 },
+        { ax: 225, segs: 16, icon: "",   isz: 26 },
+        { ax: 280, segs: 8,  icon: "★",  isz: 26 },
+        { ax: 333, segs: 13, icon: "󰽧", isz: 26 },
+        { ax: 388, segs: 10, icon: "★",  isz: 26 },
+        { ax: 440, segs: 11, icon: "󰽧", isz: 26 },
     ]
 
-    readonly property real segLen: 20
-    readonly property real grav:   1
-    readonly property real damp:   0.97
-    readonly property real maxV:   50
-
-    readonly property real swayAmp:   0.12
-    readonly property real swaySpeed: 0.0008
-    property real swayT: 0.0
-
-    property var _pts: []
-    property var tailsX: []
-    property var tailsY: []
-    property var tailAngles: []
-
-    function initRopes() {
-        var arr = []
-        for (var r = 0; r < ropeDefs.length; r++) {
-            var d = ropeDefs[r]
-            var seg = []
-            for (var i = 0; i <= d.segs; i++) {
-                seg.push({ x: d.ax, y: root.ropeOffsetY, vx: 0, vy: 0, px: d.ax, py: root.ropeOffsetY })
-            }
-            arr.push(seg)
-        }
-        _pts = arr
-        _publishTails()
+    // Click-through when hidden; capture bar-width region when shown
+    mask: Region {
+        regions: root.shown ? [visibleRegion] : []
+    }
+    Region {
+        id: visibleRegion
+        x: root.centerOffset; y: 0; width: 460; height: root.implicitHeight
     }
 
-    function _publishTails() {
-        var tx = [], ty = [], ta = []
-        for (var r = 0; r < _pts.length; r++) {
-            var rope = _pts[r]
-            var tip  = rope[rope.length - 1]
-            var prev = rope[rope.length - 2]
-            tx.push(tip.x)
-            ty.push(tip.y)
-            var adx = tip.x - prev.x
-            var ady = tip.y - prev.y
-            ta.push(Math.atan2(adx, -ady) * 180 / Math.PI)
-        }
-        tailsX = tx
-        tailsY = ty
-        tailAngles = ta
-    }
-
-    function stepPhysics() {
-        var pts = _pts
-        var MV  = maxV
-        var SL  = segLen
-
-        swayT += 1
-
-        for (var r = 0; r < pts.length; r++) {
-            var rope = pts[r]
-            var d    = ropeDefs[r]
-
-            rope[0].x  = d.ax; rope[0].y  = root.ropeOffsetY
-            rope[0].vx = 0;    rope[0].vy = 0
-            rope[0].px = d.ax; rope[0].py = root.ropeOffsetY
-
-            var phase = r * 0.7
-
-            for (var i = 1; i < rope.length; i++) {
-                var p = rope[i]
-                var windFactor = i / rope.length
-                var wind = Math.sin(swayT * swaySpeed * 1000 + phase) * swayAmp * windFactor
-                p.vx += wind
-                p.vy += grav
-                p.vx *= damp
-                p.vy *= damp
-                p.vx = Math.max(-MV, Math.min(MV, p.vx))
-                p.vy = Math.max(-MV, Math.min(MV, p.vy))
-                p.px = p.x
-                p.py = p.y
-                p.x += p.vx
-                p.y += p.vy
-            }
-
-            for (var pass = 0; pass < 8; pass++) {
-                rope[0].x = d.ax; rope[0].y = root.ropeOffsetY
-                for (var i = 1; i < rope.length; i++) {
-                    var p    = rope[i]
-                    var prev = rope[i - 1]
-                    var dx   = p.x - prev.x
-                    var dy   = p.y - prev.y
-                    var dist = Math.sqrt(dx * dx + dy * dy)
-                    if (dist < 0.0001) continue
-                    var diff = (dist - SL) / dist
-                    if (i === 1) {
-                        p.x -= dx * diff
-                        p.y -= dy * diff
-                    } else {
-                        var half = diff * 0.5
-                        p.x    -= dx * half
-                        p.y    -= dy * half
-                        prev.x += dx * half
-                        prev.y += dy * half
-                    }
-                }
-            }
-
-            rope[0].x = d.ax; rope[0].y = root.ropeOffsetY
-
-            for (var i = 1; i < rope.length; i++) {
-                var p = rope[i]
-                p.vx = Math.max(-MV, Math.min(MV, p.x - p.px))
-                p.vy = Math.max(-MV, Math.min(MV, p.y - p.py))
-            }
-        }
-
-        _publishTails()
-    }
-
-    Component.onCompleted: initRopes()
-
-    MouseArea {
-        id: hoverArea
-        anchors.fill: parent
-        hoverEnabled: true
-        property real lastMouseX: 0
-
-        onEntered: {
-            hideTimer.stop()
-            lastMouseX = mouseX
-            if (!root.shown) {
-                root.initRopes()
-                root.shown = true
-                if (!root.everShown) {
-                    root.everShown = true
-                    burstSystem.running = true
-                    burstEmitter.burst(55)
-                    burstStop.restart()
-                }
-            }
-        }
-        onExited: hideTimer.restart()
-        onContainsMouseChanged: {
-            if (containsMouse) hideTimer.stop()
-        }
-        onMouseXChanged: {
-            var dx = mouseX - lastMouseX
-            lastMouseX = mouseX
-            var pts = root._pts
-            for (var r = 0; r < pts.length; r++) {
-                var rope = pts[r]
-                var d = root.ropeDefs[r]
-                var dist = Math.abs(mouseX - d.ax)
-                if (dist < 80) {
-                    var influence = (1.0 - dist / 80.0) * 0.4
-                    for (var i = 1; i < rope.length; i++) {
-                        var factor = (i / rope.length) * influence
-                        rope[i].vx += dx * factor
-                    }
-                }
-            }
-            root._pts = pts
-        }
-    }
-
+    // ── Content ───────────────────────────────────────────────────────────
     Item {
         id: ropesArea
         anchors.fill: parent
@@ -218,76 +105,44 @@ WlrLayershell {
         visible: opacity > 0
         Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
 
-        Timer {
-            running: root.shown
-            interval: 16; repeat: true
-            onTriggered: { root.stepPhysics(); ropeCanvas.requestPaint() }
-        }
-
-        Rectangle {
-            anchors { top: parent.top; left: parent.left; right: parent.right }
-            height: 2; radius: 1
-            color: Qt.rgba(0.75, 0.6, 1.0, 0.5)
-        }
-
-        Canvas {
-            id: ropeCanvas
+        // Physics widget — owns all simulation, canvas, mouse interaction
+        Wid.RopePhysics {
+            id: ropePhysics
             anchors.fill: parent
-            onPaint: {
-                var ctx = getContext("2d")
-                ctx.clearRect(0, 0, width, height)
-                var pts = root._pts
-                if (!pts || !pts.length) return
-                ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.lineJoin = "round"
-
-                for (var r = 0; r < pts.length; r++) {
-                    var rope = pts[r]
-                    if (rope.length < 2) continue
-                    ctx.beginPath()
-                    ctx.strokeStyle = "rgba(195,158,255,0.75)"
-                    ctx.moveTo(rope[0].x, rope[0].y)
-                    for (var i = 1; i < rope.length - 1; i++) {
-                        var mx = (rope[i].x + rope[i+1].x) * 0.5
-                        var my = (rope[i].y + rope[i+1].y) * 0.5
-                        ctx.quadraticCurveTo(rope[i].x, rope[i].y, mx, my)
-                    }
-                    ctx.lineTo(rope[rope.length-1].x, rope[rope.length-1].y)
-                    ctx.stroke()
-                    ctx.fillStyle = "rgba(220,190,255,0.55)"
-                    for (var j = 1; j < rope.length - 1; j += 3) {
-                        ctx.beginPath()
-                        ctx.arc(rope[j].x, rope[j].y, 2.2, 0, Math.PI*2)
-                        ctx.fill()
-                    }
-                    ctx.beginPath(); ctx.fillStyle = "rgba(200,170,255,0.85)"
-                    ctx.arc(rope[0].x, rope[0].y, 3.5, 0, Math.PI*2); ctx.fill()
-                }
-            }
+            ropeDefs:     root.ropeDefs
+            centerOffset: root.centerOffset
+            anchorY:      root.ropeOffsetY
+            running:      root.shown
         }
 
+        // Ornaments track rope tips from the widget's outputs
         Repeater {
             model: root.ropeDefs
             Text {
                 id: orn
                 required property var modelData
                 required property int index
+
                 text: orn.index === 4
                     ? (Hyprland.focusedMonitor?.activeWorkspace?.id ?? "?").toString()
                     : orn.modelData.icon
-                font.family: orn.index === 4 ? "" : "Symbols Nerd Font"
+                font.family:    orn.index === 4 ? "" : "Symbols Nerd Font"
                 font.pixelSize: orn.modelData.isz * 3
-                color: Qt.rgba(0.88, 0.74, 1.0, 0.92)
-                x: (root.tailsX[orn.index] ?? orn.modelData.ax) - width * 0.5
-                y: (root.tailsY[orn.index] ?? 0) - height * 0.5
-                rotation: (root.tailAngles[orn.index] ?? 0) + (orn.index === 4 ? 180 : 0)
+                color:          Qt.rgba(0.88, 0.74, 1.0, 0.92)
+                x: (ropePhysics.tailsX[orn.index] ?? (orn.modelData.ax + root.centerOffset)) - width * 0.5
+                y: (ropePhysics.tailsY[orn.index] ?? 0) - height * 0.5
+                rotation:        ropePhysics.tailAngles[orn.index] ?? 0
                 transformOrigin: Item.Center
             }
         }
 
+        // Spawn burst on first open
         ParticleSystem {
             id: burstSystem
-            anchors.top: parent.top; anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width; height: 8; running: false
+            x: root.centerOffset; width: 460
+            anchors.top: parent.top
+            height: 8; running: false
+
             ImageParticle {
                 groups: ["b"]; source: "qrc:///particleresources/star.png"
                 color: "#d4b0ff"; colorVariation: 0.45; alpha: 0.9
@@ -303,6 +158,4 @@ WlrLayershell {
             Timer { id: burstStop; interval: 1500; onTriggered: burstSystem.running = false }
         }
     }
-
-    Timer { id: hideTimer; interval: 600; onTriggered: root.shown = false }
 }
