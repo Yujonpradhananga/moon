@@ -24,35 +24,38 @@ WlrLayershell {
     property bool shown: false
     property bool everShown: false
 
-    // ── Mask ─────────────────────────────────────────────────────────────
     mask: Region {
         regions: root.shown ? [fullRegion] : [hotZoneRegion]
     }
-    // Hot zone: 50px tall so mouse doesn't "fall through" the gap on transition
     Region { id: hotZoneRegion; x: 0; y: 0; width: root.implicitWidth; height: 50 }
     Region { id: fullRegion;    x: 0; y: 0; width: root.implicitWidth; height: root.implicitHeight }
 
-    // ── Rope definitions ──────────────────────────────────────────────────
     readonly property var ropeDefs: [
-        { ax: 28,  segs: 10, icon: "󰽧", isz: 26 },
-        { ax: 78,  segs: 7,  icon: "󱗃",  isz: 22 },
-        { ax: 130, segs: 13, icon: "󰽧", isz: 26 },
-        { ax: 183, segs: 8,  icon: "󱗃",  isz: 22 },
-        { ax: 238, segs: 14, icon: "󰽧", isz: 26 },
-        { ax: 292, segs: 6,  icon: "󱗃",  isz: 22 },
-        { ax: 345, segs: 11, icon: "󰽧", isz: 26 },
-        { ax: 400, segs: 8,  icon: "󱗃",  isz: 22 },
-        { ax: 445, segs: 9,  icon: "󰽧", isz: 26 },
+        { ax: 28,  segs: 12, icon: "󰽧", isz: 26 },
+        { ax: 78,  segs: 9,  icon: "★",  isz: 18 },
+        { ax: 130, segs: 15, icon: "󰽧", isz: 26 },
+        { ax: 183, segs: 10, icon: "★",  isz: 18 },
+        { ax: 238, segs: 16, icon: "󰽧", isz: 26 },
+        { ax: 292, segs: 8,  icon: "★",  isz: 18 },
+        { ax: 345, segs: 13, icon: "󰽧", isz: 26 },
+        { ax: 400, segs: 10, icon: "★",  isz: 18 },
+        { ax: 445, segs: 11, icon: "󰽧", isz: 26 },
     ]
 
-    readonly property real segLen: 24
-    readonly property real grav:   0.18   // reduced — less violent drop
-    readonly property real damp:   0.80   // increased — settles faster, no runaway
-    readonly property real maxV:   8      // velocity cap — prevents instability
+    readonly property real segLen: 40
+    readonly property real grav:   1
+    readonly property real damp:   0.97
+    readonly property real maxV:   50
+
+    // wind sway
+    readonly property real swayAmp:   0.12
+    readonly property real swaySpeed: 0.0008
+    property real swayT: 0.0
 
     property var _pts: []
     property var tailsX: []
     property var tailsY: []
+    property var tailAngles: []
 
     function initRopes() {
         var arr = []
@@ -60,9 +63,7 @@ WlrLayershell {
             var d = ropeDefs[r]
             var seg = []
             for (var i = 0; i <= d.segs; i++) {
-                // tiny initial nudge so ropes start swaying, not a big random kick
-                seg.push({ x: d.ax + (Math.random()-0.5)*1.5,
-                            y: i * segLen, vx: 0, vy: 0 })
+                seg.push({ x: d.ax, y: 0, vx: 0, vy: 0, px: d.ax, py: 0 })
             }
             arr.push(seg)
         }
@@ -71,65 +72,99 @@ WlrLayershell {
     }
 
     function _publishTails() {
-        var tx = [], ty = []
+        var tx = [], ty = [], ta = []
         for (var r = 0; r < _pts.length; r++) {
-            var tip = _pts[r][_pts[r].length - 1]
-            tx.push(tip.x); ty.push(tip.y)
+            var rope = _pts[r]
+            var tip  = rope[rope.length - 1]
+            var prev = rope[rope.length - 2]
+            tx.push(tip.x)
+            ty.push(tip.y)
+            // angle of last segment for icon rotation
+            var adx = tip.x - prev.x
+            var ady = tip.y - prev.y
+            ta.push(Math.atan2(adx, -ady) * 180 / Math.PI)
         }
-        tailsX = tx; tailsY = ty
+        tailsX = tx
+        tailsY = ty
+        tailAngles = ta
     }
 
     function stepPhysics() {
         var pts = _pts
         var MV  = maxV
+        var SL  = segLen
+
+        swayT += 1
+
         for (var r = 0; r < pts.length; r++) {
             var rope = pts[r]
             var d    = ropeDefs[r]
-            rope[0].x = d.ax; rope[0].y = 0
-            rope[0].vx = 0;   rope[0].vy = 0
+
+            rope[0].x  = d.ax; rope[0].y  = 0
+            rope[0].vx = 0;    rope[0].vy = 0
+            rope[0].px = d.ax; rope[0].py = 0
+
+            // per-rope phase offset so they don't all sway in sync
+            var phase = r * 0.7
 
             for (var i = 1; i < rope.length; i++) {
-                var p    = rope[i]
-                var prev = rope[i - 1]
-
-                var dx = prev.x - p.x
-                var dy = prev.y - p.y
-                var dist = Math.sqrt(dx*dx + dy*dy) || 1
-                var ext  = dist - segLen
-                var fx   = (dx / dist) * ext * 0.65   // softer spring
-                var fy   = (dy / dist) * ext * 0.65 + grav
-
-                // next-segment spring (weaker, for shape)
-                if (i < rope.length - 1) {
-                    var nx = rope[i+1].x - p.x
-                    var ny = rope[i+1].y - p.y
-                    var nd = Math.sqrt(nx*nx + ny*ny) || 1
-                    var ne = nd - segLen
-                    fx += (nx / nd) * ne * 0.25
-                    fy += (ny / nd) * ne * 0.25
-                }
-
-                var nvx = p.vx * damp + fx
-                var nvy = p.vy * damp + fy
-                // velocity cap — the key to preventing runaway
-                p.vx = Math.max(-MV, Math.min(MV, nvx))
-                p.vy = Math.max(-MV, Math.min(MV, nvy))
+                var p = rope[i]
+                // sway: horizontal wind force, stronger toward tip
+                var windFactor = i / rope.length
+                var wind = Math.sin(swayT * swaySpeed * 1000 + phase) * swayAmp * windFactor
+                p.vx += wind
+                p.vy += grav
+                p.vx *= damp
+                p.vy *= damp
+                p.vx = Math.max(-MV, Math.min(MV, p.vx))
+                p.vy = Math.max(-MV, Math.min(MV, p.vy))
+                p.px = p.x
+                p.py = p.y
                 p.x += p.vx
                 p.y += p.vy
             }
+
+            for (var pass = 0; pass < 8; pass++) {
+                rope[0].x = d.ax; rope[0].y = 0
+                for (var i = 1; i < rope.length; i++) {
+                    var p    = rope[i]
+                    var prev = rope[i - 1]
+                    var dx   = p.x - prev.x
+                    var dy   = p.y - prev.y
+                    var dist = Math.sqrt(dx * dx + dy * dy)
+                    if (dist < 0.0001) continue
+                    var diff = (dist - SL) / dist
+                    if (i === 1) {
+                        p.x -= dx * diff
+                        p.y -= dy * diff
+                    } else {
+                        var half = diff * 0.5
+                        p.x    -= dx * half
+                        p.y    -= dy * half
+                        prev.x += dx * half
+                        prev.y += dy * half
+                    }
+                }
+            }
+
+            rope[0].x = d.ax; rope[0].y = 0
+
+            for (var i = 1; i < rope.length; i++) {
+                var p = rope[i]
+                p.vx = Math.max(-MV, Math.min(MV, p.x - p.px))
+                p.vy = Math.max(-MV, Math.min(MV, p.y - p.py))
+            }
         }
+
         _publishTails()
     }
 
     Component.onCompleted: initRopes()
 
-    // ── Single hover area (covers both trigger strip + content) ───────────
-    // Bug fix: one MouseArea eliminates the gap between hotZone and ropesArea
     MouseArea {
         id: hoverArea
         anchors.fill: parent
         hoverEnabled: true
-        // only receives events where mask allows (hotZoneRegion or fullRegion)
         onEntered: {
             hideTimer.stop()
             if (!root.shown) {
@@ -144,13 +179,11 @@ WlrLayershell {
             }
         }
         onExited: hideTimer.restart()
-        // Cancel hide if mouse re-enters while timer is running
         onContainsMouseChanged: {
             if (containsMouse) hideTimer.stop()
         }
     }
 
-    // ── Content ───────────────────────────────────────────────────────────
     Item {
         id: ropesArea
         anchors.fill: parent
@@ -193,14 +226,12 @@ WlrLayershell {
                     }
                     ctx.lineTo(rope[rope.length-1].x, rope[rope.length-1].y)
                     ctx.stroke()
-                    // Beads
                     ctx.fillStyle = "rgba(220,190,255,0.55)"
                     for (var j = 1; j < rope.length - 1; j += 3) {
                         ctx.beginPath()
                         ctx.arc(rope[j].x, rope[j].y, 2.2, 0, Math.PI*2)
                         ctx.fill()
                     }
-                    // Anchor dot
                     ctx.beginPath(); ctx.fillStyle = "rgba(200,170,255,0.85)"
                     ctx.arc(rope[0].x, rope[0].y, 3.5, 0, Math.PI*2); ctx.fill()
                 }
@@ -217,8 +248,12 @@ WlrLayershell {
                 font.family: "Symbols Nerd Font"
                 font.pointSize: orn.modelData.isz
                 color: Qt.rgba(0.88, 0.74, 1.0, 0.92)
+                // center icon on rope tip
                 x: (root.tailsX[orn.index] ?? orn.modelData.ax) - width * 0.5
-                y: root.tailsY[orn.index] ?? 0
+                y: (root.tailsY[orn.index] ?? 0)
+                // rotate to follow rope direction
+                rotation: root.tailAngles[orn.index] ?? 0
+                transformOrigin: Item.Top
             }
         }
 
@@ -242,6 +277,5 @@ WlrLayershell {
         }
     }
 
-    // Longer hide delay (600ms) avoids edge-case flicker on mask transition
     Timer { id: hideTimer; interval: 600; onTriggered: root.shown = false }
 }
