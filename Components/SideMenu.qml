@@ -9,12 +9,7 @@ import qs.Generics as Gen
 
 Item {
   id: root
-Timer {
-  id: filesOpenTimer
-  interval: 1
-  repeat: false
-  onTriggered: Dat.Globals.sideMenuView = "files"
-}
+
   readonly property bool isOpen: Dat.Globals.menuOpen
   readonly property string currentView: Dat.Globals.sideMenuView
   readonly property real menuWidth: 320
@@ -97,7 +92,7 @@ Timer {
     color: "transparent"
     Rectangle {
       anchors.fill: parent
-color: Dat.Colors.withAlpha(Dat.Colors.background, 0.60)
+      color: Dat.Colors.withAlpha(Dat.Colors.background, 0.00)
       radius: 0
       Rectangle {
         anchors.bottom: parent.bottom
@@ -123,19 +118,14 @@ color: Dat.Colors.withAlpha(Dat.Colors.background, 0.60)
   }
 
   // Main menu panel
-BlobRect {
-  id: mainMenuBlob
-  group: menuBlobGroup
-  width: root.menuWidth
-  height: parent.height
-  x: root.currentView === "main" ? 0 : -root.menuWidth
-  radius: 0
-  stiffness: 0
-  damping: 24
-  deformScale: 1.0002
-  Behavior on x {
-    NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
-  }
+  Item {
+    id: mainMenuBlob
+    width: root.menuWidth
+    height: parent.height
+    x: root.currentView === "main" ? 0 : -root.menuWidth
+    Behavior on x {
+      NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
+    }
     ColumnLayout {
       anchors.bottom: parent.bottom
       anchors.bottomMargin: 60
@@ -176,7 +166,7 @@ BlobRect {
             Layout.fillWidth: true
             Layout.preferredHeight: 1
             Layout.topMargin: 12
-            color: Dat.Colors.withAlpha(Dat.Colors.primary, 0.0)
+            color: Dat.Colors.withAlpha(Dat.Colors.primary, 0.3)
           }
         }
       }
@@ -209,10 +199,8 @@ BlobRect {
                 Dat.Globals.sideMenuView = "toggles"
               } else if (menuItem.label === "Settings") {
                 Dat.Globals.sideMenuView = "settings"
-} else if (menuItem.label === "Files") {
-  Dat.Globals.menuOpen = false
-  filesOpenTimer.restart()
-
+              } else if (menuItem.label === "Files") {
+                Dat.Globals.sideMenuView = "files"
               } else if (menuItem.label === "Terminal") {
                 Dat.Globals.sideMenuView = "sysinfo"
               }

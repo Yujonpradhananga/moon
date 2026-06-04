@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Particles
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Hyprland
 
 WlrLayershell {
     id: root
@@ -18,11 +19,20 @@ WlrLayershell {
 
     anchors.top: true
     anchors.right: true
-    implicitWidth: 470
+    implicitWidth: 500
     implicitHeight: 390
 
     property bool shown: false
     property bool everShown: false
+    property real ropeOffsetY: 0
+
+    Behavior on ropeOffsetY {
+        NumberAnimation { duration: 350; easing.type: Easing.InCubic }
+    }
+
+    onShownChanged: {
+        ropeOffsetY = shown ? 0 : -implicitHeight
+    }
 
     mask: Region {
         regions: root.shown ? [fullRegion] : [hotZoneRegion]
@@ -31,23 +41,22 @@ WlrLayershell {
     Region { id: fullRegion;    x: 0; y: 0; width: root.implicitWidth; height: root.implicitHeight }
 
     readonly property var ropeDefs: [
-        { ax: 28,  segs: 12, icon: "󰽧", isz: 26 },
-        { ax: 78,  segs: 9,  icon: "★",  isz: 18 },
-        { ax: 130, segs: 15, icon: "󰽧", isz: 26 },
-        { ax: 183, segs: 10, icon: "★",  isz: 18 },
-        { ax: 238, segs: 16, icon: "󰽧", isz: 26 },
-        { ax: 292, segs: 8,  icon: "★",  isz: 18 },
-        { ax: 345, segs: 13, icon: "󰽧", isz: 26 },
-        { ax: 400, segs: 10, icon: "★",  isz: 18 },
-        { ax: 445, segs: 11, icon: "󰽧", isz: 26 },
+        { ax: 88,  segs: 12, icon: "󰽧", isz: 26 },
+        { ax: 118, segs: 9,  icon: "★",  isz: 26 },
+        { ax: 170, segs: 15, icon: "󰽧", isz: 26 },
+        { ax: 223, segs: 10, icon: "★",  isz: 26 },
+        { ax: 278, segs: 16, icon: "",   isz: 26 },
+        { ax: 332, segs: 8,  icon: "★",  isz: 26 },
+        { ax: 385, segs: 13, icon: "󰽧", isz: 26 },
+        { ax: 440, segs: 10, icon: "★",  isz: 26 },
+        { ax: 485, segs: 11, icon: "󰽧", isz: 26 },
     ]
 
-    readonly property real segLen: 40
+    readonly property real segLen: 20
     readonly property real grav:   1
     readonly property real damp:   0.97
     readonly property real maxV:   50
 
-    // wind sway
     readonly property real swayAmp:   0.12
     readonly property real swaySpeed: 0.0008
     property real swayT: 0.0
@@ -63,7 +72,7 @@ WlrLayershell {
             var d = ropeDefs[r]
             var seg = []
             for (var i = 0; i <= d.segs; i++) {
-                seg.push({ x: d.ax, y: 0, vx: 0, vy: 0, px: d.ax, py: 0 })
+                seg.push({ x: d.ax, y: root.ropeOffsetY, vx: 0, vy: 0, px: d.ax, py: root.ropeOffsetY })
             }
             arr.push(seg)
         }
@@ -79,7 +88,6 @@ WlrLayershell {
             var prev = rope[rope.length - 2]
             tx.push(tip.x)
             ty.push(tip.y)
-            // angle of last segment for icon rotation
             var adx = tip.x - prev.x
             var ady = tip.y - prev.y
             ta.push(Math.atan2(adx, -ady) * 180 / Math.PI)
@@ -100,16 +108,14 @@ WlrLayershell {
             var rope = pts[r]
             var d    = ropeDefs[r]
 
-            rope[0].x  = d.ax; rope[0].y  = 0
+            rope[0].x  = d.ax; rope[0].y  = root.ropeOffsetY
             rope[0].vx = 0;    rope[0].vy = 0
-            rope[0].px = d.ax; rope[0].py = 0
+            rope[0].px = d.ax; rope[0].py = root.ropeOffsetY
 
-            // per-rope phase offset so they don't all sway in sync
             var phase = r * 0.7
 
             for (var i = 1; i < rope.length; i++) {
                 var p = rope[i]
-                // sway: horizontal wind force, stronger toward tip
                 var windFactor = i / rope.length
                 var wind = Math.sin(swayT * swaySpeed * 1000 + phase) * swayAmp * windFactor
                 p.vx += wind
@@ -125,7 +131,7 @@ WlrLayershell {
             }
 
             for (var pass = 0; pass < 8; pass++) {
-                rope[0].x = d.ax; rope[0].y = 0
+                rope[0].x = d.ax; rope[0].y = root.ropeOffsetY
                 for (var i = 1; i < rope.length; i++) {
                     var p    = rope[i]
                     var prev = rope[i - 1]
@@ -147,7 +153,7 @@ WlrLayershell {
                 }
             }
 
-            rope[0].x = d.ax; rope[0].y = 0
+            rope[0].x = d.ax; rope[0].y = root.ropeOffsetY
 
             for (var i = 1; i < rope.length; i++) {
                 var p = rope[i]
@@ -165,8 +171,11 @@ WlrLayershell {
         id: hoverArea
         anchors.fill: parent
         hoverEnabled: true
+        property real lastMouseX: 0
+
         onEntered: {
             hideTimer.stop()
+            lastMouseX = mouseX
             if (!root.shown) {
                 root.initRopes()
                 root.shown = true
@@ -181,6 +190,24 @@ WlrLayershell {
         onExited: hideTimer.restart()
         onContainsMouseChanged: {
             if (containsMouse) hideTimer.stop()
+        }
+        onMouseXChanged: {
+            var dx = mouseX - lastMouseX
+            lastMouseX = mouseX
+            var pts = root._pts
+            for (var r = 0; r < pts.length; r++) {
+                var rope = pts[r]
+                var d = root.ropeDefs[r]
+                var dist = Math.abs(mouseX - d.ax)
+                if (dist < 80) {
+                    var influence = (1.0 - dist / 80.0) * 0.4
+                    for (var i = 1; i < rope.length; i++) {
+                        var factor = (i / rope.length) * influence
+                        rope[i].vx += dx * factor
+                    }
+                }
+            }
+            root._pts = pts
         }
     }
 
@@ -244,16 +271,16 @@ WlrLayershell {
                 id: orn
                 required property var modelData
                 required property int index
-                text: orn.modelData.icon
-                font.family: "Symbols Nerd Font"
-                font.pointSize: orn.modelData.isz
+                text: orn.index === 4
+                    ? (Hyprland.focusedMonitor?.activeWorkspace?.id ?? "?").toString()
+                    : orn.modelData.icon
+                font.family: orn.index === 4 ? "" : "Symbols Nerd Font"
+                font.pixelSize: orn.modelData.isz * 3
                 color: Qt.rgba(0.88, 0.74, 1.0, 0.92)
-                // center icon on rope tip
                 x: (root.tailsX[orn.index] ?? orn.modelData.ax) - width * 0.5
-                y: (root.tailsY[orn.index] ?? 0)
-                // rotate to follow rope direction
-                rotation: root.tailAngles[orn.index] ?? 0
-                transformOrigin: Item.Top
+                y: (root.tailsY[orn.index] ?? 0) - height * 0.5
+                rotation: (root.tailAngles[orn.index] ?? 0) + (orn.index === 4 ? 180 : 0)
+                transformOrigin: Item.Center
             }
         }
 
