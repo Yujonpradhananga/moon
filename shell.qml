@@ -25,6 +25,11 @@ ShellRoot {
       Lay.PowerScreen {
         modelData: scopeRoot.modelData
       }
+Lay.MediaPlayer { modelData: modelData }
+
+      Lay.Shangles {
+        modelData: scopeRoot.modelData
+      }
 
 
       Lay.BrightnessMoon {

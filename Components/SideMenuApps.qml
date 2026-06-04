@@ -19,22 +19,20 @@ WlrLayershell {
   layer: WlrLayer.Overlay
   namespace: "moon.files"
   screen: modelData
-  visible: Dat.Globals.sideMenuView === "files" && Dat.Globals.menuOpen
+visible: Dat.Globals.sideMenuView === "files"
 
   property string animState: "idle"
   property real wipeProgress: 0.0
 
   onVisibleChanged: {
-    if (visible) {
-      animState = "wipe_in"
-      wipeInAnim.start()
-      searchInput.text = ""
-      searchInput.forceActiveFocus()
-      carousel.currentIndex = 0
-    } else {
-      animState = "idle"
-      wipeProgress = 0.0
-    }
+if (visible) {
+  wipeProgress = 0.0
+  animState = "wipe_in"
+  wipeInAnim.start()
+  searchInput.text = ""
+  searchInput.forceActiveFocus()
+  carousel.currentIndex = 0
+}
   }
 
   NumberAnimation {
