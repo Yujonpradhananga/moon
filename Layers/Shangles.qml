@@ -72,7 +72,7 @@ WlrLayershell {
                 burstStop.restart()
             }
         } else {
-            shown = false              // immediate close on second click
+            shown = false
         }
     }
 
@@ -81,7 +81,7 @@ WlrLayershell {
         { ax: 65,  segs: 9,  icon: "★",  isz: 26 },
         { ax: 117, segs: 15, icon: "󰽧", isz: 26 },
         { ax: 170, segs: 10, icon: "★",  isz: 26 },
-        { ax: 225, segs: 16, icon: "",   isz: 26 },
+        { ax: 225, segs: 10, icon: "",   isz: 26 },
         { ax: 280, segs: 8,  icon: "★",  isz: 26 },
         { ax: 333, segs: 13, icon: "󰽧", isz: 26 },
         { ax: 388, segs: 10, icon: "★",  isz: 26 },
@@ -89,13 +89,13 @@ WlrLayershell {
     ]
 
     // Click-through when hidden; capture bar-width region when shown
-    mask: Region {
-        regions: root.shown ? [visibleRegion] : []
-    }
-    Region {
-        id: visibleRegion
-        x: root.centerOffset; y: 0; width: 460; height: root.implicitHeight
-    }
+mask: Region {
+    regions: root.shown ? [visibleRegion] : []
+}
+Region {
+    id: visibleRegion
+    x: root.centerOffset; y: root.barHeight; width: 460; height: root.implicitHeight - root.barHeight
+}
 
     // ── Content ───────────────────────────────────────────────────────────
     Item {
@@ -131,12 +131,10 @@ WlrLayershell {
                 color:          Qt.rgba(0.88, 0.74, 1.0, 0.92)
                 x: (ropePhysics.tailsX[orn.index] ?? (orn.modelData.ax + root.centerOffset)) - width * 0.5
                 y: (ropePhysics.tailsY[orn.index] ?? 0) - height * 0.5
-                rotation:        ropePhysics.tailAngles[orn.index] ?? 0
+                rotation: orn.index === 4 ? 0 : (ropePhysics.tailAngles[orn.index] ?? 0)
                 transformOrigin: Item.Center
             }
         }
-
-        // Spawn burst on first open
         ParticleSystem {
             id: burstSystem
             x: root.centerOffset; width: 460

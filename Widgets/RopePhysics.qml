@@ -107,11 +107,6 @@ Item {
     }
 
     // ── Top rail ──────────────────────────────────────────────────────────
-    Rectangle {
-        x: physics.centerOffset; y: physics.anchorY
-        width: 460; height: 2; radius: 1
-        color: Qt.rgba(0.75, 0.6, 1.0, 0.5)
-    }
 
     // ── Rope canvas ───────────────────────────────────────────────────────
     Canvas {
