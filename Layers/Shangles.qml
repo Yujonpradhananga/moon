@@ -41,15 +41,15 @@ WlrLayershell {
     Region { id: fullRegion;    x: 0; y: 0; width: root.implicitWidth; height: root.implicitHeight }
 
     readonly property var ropeDefs: [
-        { ax: 88,  segs: 12, icon: "󰽧", isz: 26 },
-        { ax: 118, segs: 9,  icon: "★",  isz: 26 },
-        { ax: 170, segs: 15, icon: "󰽧", isz: 26 },
-        { ax: 223, segs: 10, icon: "★",  isz: 26 },
-        { ax: 278, segs: 16, icon: "",   isz: 26 },
-        { ax: 332, segs: 8,  icon: "★",  isz: 26 },
-        { ax: 385, segs: 13, icon: "󰽧", isz: 26 },
-        { ax: 440, segs: 10, icon: "★",  isz: 26 },
-        { ax: 485, segs: 11, icon: "󰽧", isz: 26 },
+        { ax: 69,  segs: 12, icon: "󰽧", isz: 26 },
+        { ax: 128, segs: 9,  icon: "★",  isz: 26 },
+        { ax: 180, segs: 15, icon: "󰽧", isz: 26 },
+        { ax: 233, segs: 10, icon: "★",  isz: 26 },
+        { ax: 288, segs: 16, icon: "",   isz: 26 },
+        { ax: 342, segs: 8,  icon: "★",  isz: 26 },
+        { ax: 395, segs: 13, icon: "󰽧", isz: 26 },
+        { ax: 450, segs: 10, icon: "★",  isz: 26 },
+        { ax: 495, segs: 11, icon: "󰽧", isz: 26 },
     ]
 
     readonly property real segLen: 20

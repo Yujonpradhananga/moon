@@ -48,7 +48,7 @@ if (visible) {
 
   NumberAnimation {
     id: wipeOutAnim
-    duration: 600
+    duration: 500
     easing.type: Easing.InOutCubic
     from: 1.0
     property: "wipeProgress"

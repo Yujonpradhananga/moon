@@ -1,4 +1,3 @@
-pragma ComponentBehavior: Bound
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
@@ -211,90 +210,9 @@ PanelWindow {
                             }
                         }
                     }
-
-                    // ── Previous button ──────────────────────────────────────
-                    Item {
-                        anchors.left: card.left
-                        anchors.leftMargin: 14
-                        anchors.verticalCenter: card.verticalCenter
-                        height: 28
-                        width: 28
-
-                        Text {
-                            id: prevIcon
-                            property real iconFill: 0
-                            anchors.centerIn: parent
-                            color: Qt.rgba(1, 1, 1, 0.75)
-                            font.bold: true
-                            font.pixelSize: 26
-                            font.family: "Material Symbols Rounded"
-                            font.variableAxes: ({"FILL": prevIcon.iconFill})
-                            text: "arrow_circle_left"
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            onClicked: card.player.previous()
-                            onEntered: prevIcon.iconFill = 1
-                            onExited: prevIcon.iconFill = 0
-                        }
-                    }
-
-                    // ── Next button ──────────────────────────────────────────
-                    Item {
-                        anchors.right: card.right
-                        anchors.rightMargin: 14
-                        anchors.verticalCenter: card.verticalCenter
-                        height: 28
-                        width: 28
-
-                        Text {
-                            id: nextIcon
-                            property real iconFill: 0
-                            anchors.centerIn: parent
-                            color: Qt.rgba(1, 1, 1, 0.75)
-                            font.bold: true
-                            font.pixelSize: 26
-                            font.family: "Material Symbols Rounded"
-                            font.variableAxes: ({"FILL": nextIcon.iconFill})
-                            text: "arrow_circle_right"
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            onClicked: card.player.next()
-                            onEntered: nextIcon.iconFill = 1
-                            onExited: nextIcon.iconFill = 0
-                        }
-                    }
                 }
             }
         }
 
-        // ── Multi-player page indicator ──────────────────────────────────────
-        PageIndicator {
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            count: playerList.count
-            currentIndex: playerList.currentIndex
-            interactive: false
-            rotation: 90
-            visible: count > 1
-
-            delegate: Rectangle {
-                id: dot
-                required property int index
-                color: (index === playerList.currentIndex) ? "white" : Qt.rgba(1, 1, 1, 0.5)
-                height: width
-                radius: 6
-                width: 6
-
-                Behavior on color {
-                    ColorAnimation { duration: 500 }
-                }
-            }
-        }
     }
 }
