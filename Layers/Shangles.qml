@@ -31,19 +31,19 @@ WlrLayershell {
     readonly property int  barHeight:    46
     readonly property real centerOffset: (root.width - 460) / 2
 
-    // Ropes hang from bar bottom when shown, retract above screen when hidden
     property real ropeOffsetY: -implicitHeight
     onShownChanged: {
-        ropeOffsetY = shown ? barHeight : -implicitHeight
+        if (shown) ropeOffsetY = barHeight
     }
 
-    // ── Window-presence detection (same as Bar / MediaPlayer) ──────────────
+    // ── Window-presence detection ──────────────────────────────────────────
     readonly property HyprlandMonitor hyprMonitor: Hyprland.monitorFor(root.screen)
     readonly property bool hasWindows: (root.hyprMonitor?.activeWorkspace?.lastIpcObject?.windows ?? 0) > 0
 
     onHasWindowsChanged: {
         if (hasWindows && root.shown) {
-            root.shown = false
+            ropeOffsetY = -implicitHeight
+            hideTimer.restart()
             Dat.Globals.shanglesOpen = false
         }
     }
@@ -59,22 +59,28 @@ WlrLayershell {
         }
     }
 
+    // ── Hide timer ─────────────────────────────────────────────────────────
+    Timer {
+        id: hideTimer
+        interval: 350
+        onTriggered: root.shown = false
+    }
+
     // ── Toggle via clock click ─────────────────────────────────────────────
     readonly property bool globallyTriggered: Dat.Globals.shanglesOpen
-    onGloballyTriggeredChanged: {
-        if (globallyTriggered) {
-            shown = true               // triggers ropeOffsetY = barHeight
-            ropePhysics.init()         // inits ropes at correct Y
-            if (!everShown) {
-                everShown = true
-                burstSystem.running = true
-                burstEmitter.burst(55)
-                burstStop.restart()
-            }
-        } else {
-            shown = false
-        }
+onGloballyTriggeredChanged: {
+    if (globallyTriggered) {
+        hideTimer.stop()
+        shown = true
+        ropePhysics.init()
+        burstSystem.running = true
+        burstEmitter.burst(55)
+        burstStop.restart()
+    } else {
+        ropeOffsetY = -implicitHeight
+        hideTimer.restart()
     }
+}
 
     readonly property var ropeDefs: [
         { ax: 15,  segs: 12, icon: "󰽧", isz: 26 },
@@ -88,14 +94,13 @@ WlrLayershell {
         { ax: 440, segs: 11, icon: "󰽧", isz: 26 },
     ]
 
-    // Click-through when hidden; capture bar-width region when shown
-mask: Region {
-    regions: root.shown ? [visibleRegion] : []
-}
-Region {
-    id: visibleRegion
-    x: root.centerOffset; y: root.barHeight; width: 460; height: root.implicitHeight - root.barHeight
-}
+    mask: Region {
+        regions: root.shown ? [visibleRegion] : []
+    }
+    Region {
+        id: visibleRegion
+        x: root.centerOffset; y: root.barHeight; width: 460; height: root.implicitHeight - root.barHeight
+    }
 
     // ── Content ───────────────────────────────────────────────────────────
     Item {
@@ -103,9 +108,8 @@ Region {
         anchors.fill: parent
         opacity: root.shown ? 1.0 : 0.0
         visible: opacity > 0
-        Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+        Behavior on opacity { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
 
-        // Physics widget — owns all simulation, canvas, mouse interaction
         Wid.RopePhysics {
             id: ropePhysics
             anchors.fill: parent
@@ -115,7 +119,6 @@ Region {
             running:      root.shown
         }
 
-        // Ornaments track rope tips from the widget's outputs
         Repeater {
             model: root.ropeDefs
             Text {
@@ -128,13 +131,14 @@ Region {
                     : orn.modelData.icon
                 font.family:    orn.index === 4 ? "" : "Symbols Nerd Font"
                 font.pixelSize: orn.modelData.isz * 3
-                color:          Qt.rgba(0.88, 0.74, 1.0, 0.92)
+                color:          Qt.rgba(0.5, 0.5, 1.0, 0.92)
                 x: (ropePhysics.tailsX[orn.index] ?? (orn.modelData.ax + root.centerOffset)) - width * 0.5
                 y: (ropePhysics.tailsY[orn.index] ?? 0) - height * 0.5
                 rotation: orn.index === 4 ? 0 : (ropePhysics.tailAngles[orn.index] ?? 0)
                 transformOrigin: Item.Center
             }
         }
+
         ParticleSystem {
             id: burstSystem
             x: root.centerOffset; width: 460

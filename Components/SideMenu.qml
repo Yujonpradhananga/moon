@@ -172,11 +172,11 @@ Item {
       }
       Repeater {
         model: ListModel {
-          ListElement { icon: "▸"; label: "Continue" }
-          ListElement { icon: "◈"; label: "Settings" }
-          ListElement { icon: "◫"; label: "Files" }
-          ListElement { icon: "♫"; label: "Music" }
-          ListElement { icon: "▣"; label: "Terminal" }
+          ListElement { icon: "▸"; label: "Quicktoggle" }
+          ListElement { icon: "◈"; label: "Shaders" }
+          ListElement { icon: "◫"; label: "Searchapp" }
+          ListElement { icon: "♫"; label: "Lunar" }
+          ListElement { icon: "▣"; label: "Info" }
           ListElement { icon: "◉"; label: "Power" }
         }
         delegate: Item {
@@ -195,13 +195,13 @@ Item {
               console.log("[MoonShell] Menu clicked: " + menuItem.label)
               if (menuItem.label === "Power") {
                 Dat.Globals.powerScreenVisible = true
-              } else if (menuItem.label === "Continue") {
+              } else if (menuItem.label === "Quicktoggle") {
                 Dat.Globals.sideMenuView = "toggles"
-              } else if (menuItem.label === "Settings") {
+              } else if (menuItem.label === "Shaders") {
                 Dat.Globals.sideMenuView = "settings"
-              } else if (menuItem.label === "Files") {
+              } else if (menuItem.label === "Searchapp") {
                 Dat.Globals.sideMenuView = "files"
-              } else if (menuItem.label === "Terminal") {
+              } else if (menuItem.label === "Info") {
                 Dat.Globals.sideMenuView = "sysinfo"
               }
             }

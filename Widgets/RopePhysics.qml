@@ -131,10 +131,6 @@ Item {
                 }
                 ctx.lineTo(rope[rope.length-1].x, rope[rope.length-1].y)
                 ctx.stroke()
-                ctx.fillStyle = "rgba(220,190,255,0.55)"
-                for (var j = 1; j < rope.length - 1; j += 3) {
-                    ctx.beginPath(); ctx.arc(rope[j].x, rope[j].y, 2.2, 0, Math.PI*2); ctx.fill()
-                }
                 ctx.beginPath(); ctx.fillStyle = "rgba(200,170,255,0.85)"
                 ctx.arc(rope[0].x, rope[0].y, 3.5, 0, Math.PI*2); ctx.fill()
             }

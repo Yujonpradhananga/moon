@@ -1,15 +1,8 @@
-// WallpaperEngine.qml
-// Shader pipeline:
-//   Stage 1 → moon.png (base image)
-//   Stage 2 → Optional effect: "motion" | "waterripple" | "cloudy"
-//   Stage 3 → Circles overlay
-//   Stage 4 → Final water-ripple pass
-//   Stage 5 → Parallax (last, mouse-driven, visible output)
-
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.Data as Dat
+import qs.Widgets as Wid
 
 WlrLayershell {
     id: root
@@ -36,6 +29,14 @@ WlrLayershell {
     }
 
     Image {
+        id: img_bgdepth
+        source: Qt.resolvedUrl("../Assets/depthmaps/bgdepth.png")
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectCrop
+        smooth: true; visible: false
+    }
+
+    Image {
         id: img_moondepth
         source: Qt.resolvedUrl("../Assets/depthmaps/moondepth.png")
         anchors.fill: parent
@@ -53,7 +54,7 @@ WlrLayershell {
 
     Image {
         id: img_circles
-        source: Qt.resolvedUrl("../Assets/depthmaps/circle.png")
+        source: Qt.resolvedUrl("../Assets/depthmaps/circledepth.png")
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
         smooth: true; visible: false
@@ -76,6 +77,14 @@ WlrLayershell {
     }
 
     Image {
+        id: img_rippledepth
+        source: Qt.resolvedUrl("../Assets/depthmaps/rippledepth.png")
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectCrop
+        smooth: true; visible: false
+      }
+
+    Image {
         id: img_normal
         source: Qt.resolvedUrl("../Assets/normalmaps/waterripplenormal.png")
         anchors.fill: parent
@@ -91,25 +100,49 @@ WlrLayershell {
         smooth: true; visible: false
     }
 
-    Image {
-        id: s1_moon
-        source: Qt.resolvedUrl("../Assets/moon.png")
+    Item {
+        id: s1_composite
         anchors.fill: parent
-        fillMode: Image.PreserveAspectCrop
-        smooth: true
-        mipmap: true
         visible: false
+
+        Image {
+            id: s1_moon
+            source: Qt.resolvedUrl("../Assets/moon.png")
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectCrop
+            smooth: true
+            mipmap: true
+        }
+
+        Wid.CavaVisualizer {
+            id: s1_cava
+            anchors {
+                left:   parent.left
+                right:  parent.right
+                top:    parent.top
+                topMargin: 400
+            }
+            height: 555
+        }
+
+        Image {
+            id: s1_subject
+            source: Qt.resolvedUrl("../Assets/subject.png")
+            anchors.fill: parent
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            mipmap: true
+        }
     }
 
     ShaderEffectSource {
         id: s1_out
-        sourceItem: s1_moon
+        sourceItem: s1_composite
         anchors.fill: parent
         visible: false
         hideSource: true
     }
 
-    // Stage 2 — Optional effects, all sourcing from s1_out directly
     ShaderEffect {
         id: s3_motion
         anchors.fill: parent
@@ -121,7 +154,7 @@ WlrLayershell {
         property real strength:  0.006
         property real speed:     2.5
         property real frequency: 1.0
-
+        property var  trailMap:  s_trail
         NumberAnimation on time {
             from: 0; to: 1000; duration: 500000
             loops: Animation.Infinite; running: true
@@ -135,11 +168,10 @@ WlrLayershell {
         id: s3_waterripple
         anchors.fill: parent
         visible: false
-
+        property var  trailMap:        s_trail
         property var  source:          s1_out
         property var  normalMapSource: img_normal
-        property var  trailMap:        s_trail
-        property var  depthMask:       img_moondepth
+        property var  depthMask:       img_rippledepth
         property real time:            0
         property real rippleStrength:  0.9
         property real rippleX:         0.5
@@ -186,7 +218,7 @@ WlrLayershell {
         property var  depthMask: img_nosubject
         property real time:      0
         property real strength:  50
-        property real speed:     10
+        property real speed:     20
         property real frequency: 5.0
 
         NumberAnimation on time {
@@ -213,36 +245,35 @@ WlrLayershell {
         }
       }
 
-ShaderEffect {
-    id: s3_5_stars
-    anchors.fill: parent
-    visible: false
+    ShaderEffect {
+        id: s3_5_stars
+        anchors.fill: parent
+        visible: false
 
-    property var  source:    s3_out
-    property var  depthMask: img_moondepth
-    property real time:      0
-    property real strength:  50
-    property real speed:     2.5
-    property real frequency: 5.0
+        property var  source:    s3_out
+        property var  depthMask: img_moondepth
+        property real time:      0
+        property real strength:  50
+        property real speed:     2.5
+        property real frequency: 5.0
 
-    NumberAnimation on time {
-        from: 0; to: 1000; duration: 500000
-        loops: Animation.Infinite; running: true
+        NumberAnimation on time {
+            from: 0; to: 1000; duration: 500000
+            loops: Animation.Infinite; running: true
+        }
+
+        vertexShader:   Qt.resolvedUrl("../Assets/shaders/stars/stars.vert.qsb")
+        fragmentShader: Qt.resolvedUrl("../Assets/shaders/stars/stars.frag.qsb")
     }
 
-    vertexShader:   Qt.resolvedUrl("../Assets/shaders/stars/stars.vert.qsb")
-    fragmentShader: Qt.resolvedUrl("../Assets/shaders/stars/stars.frag.qsb")
-}
+    ShaderEffectSource {
+        id: s3_5_out
+        sourceItem: s3_5_stars
+        anchors.fill: parent
+        visible: false
+        hideSource: true
+    }
 
-ShaderEffectSource {
-    id: s3_5_out
-    sourceItem: s3_5_stars
-    anchors.fill: parent
-    visible: false
-    hideSource: true
-}
-
-    // Stage 3 — Circles overlay
     ShaderEffect {
         id: s4_circles
         anchors.fill: parent
@@ -318,7 +349,6 @@ ShaderEffectSource {
         onTriggered: s_trail.tick(0.016)
     }
 
-    // Stage 4 — Water ripple pass
     ShaderEffect {
         id: s5_final
         anchors.fill: parent

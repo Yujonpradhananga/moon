@@ -32,9 +32,6 @@ ShellRoot {
       Lay.VolumeMoon {
         modelData: modelData
       }
-      Lay.Cava {
-        modelData: scopeRoot.modelData
-      }
       Comp.SideMenuApps {
         modelData: scopeRoot.modelData
       }
