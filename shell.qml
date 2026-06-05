@@ -32,6 +32,9 @@ ShellRoot {
       Lay.VolumeMoon {
         modelData: modelData
       }
+      Lay.MediaPlayer {
+        modelData: modelData
+      }
       Comp.SideMenuApps {
         modelData: scopeRoot.modelData
       }

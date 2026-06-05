@@ -175,9 +175,9 @@ Item {
           ListElement { icon: "▸"; label: "Quicktoggle" }
           ListElement { icon: "◈"; label: "Shaders" }
           ListElement { icon: "◫"; label: "Searchapp" }
-          ListElement { icon: "♫"; label: "Lunar" }
+          ListElement { icon: "◉"; label: "Lunar" }
           ListElement { icon: "▣"; label: "Info" }
-          ListElement { icon: "◉"; label: "Power" }
+          ListElement { icon: "x"; label: "Power" }
         }
         delegate: Item {
           id: menuItem
@@ -203,6 +203,8 @@ Item {
                 Dat.Globals.sideMenuView = "files"
               } else if (menuItem.label === "Info") {
                 Dat.Globals.sideMenuView = "sysinfo"
+              }else if (menuItem.label === "Lunar") {
+                Dat.Globals.sideMenuView = "lunar"
               }
             }
           }
@@ -256,24 +258,23 @@ Item {
     }
   }
 
-  // Toggles panel
-Item {
-  id: togglesBlob
-  width: root.menuWidth
-  height: parent.height
-  x: root.currentView === "toggles" ? 0 : root.menuWidth
-  Behavior on x {
-    NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
-  }
-  Wid.QuickTogglesPanel {
-    anchors.fill: parent
-    opacity: root.currentView === "toggles" ? 1.0 : 0.0
-    visible: opacity > 0
-    Behavior on opacity {
-      NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+  Item {
+    id: togglesBlob
+    width: root.menuWidth
+    height: parent.height
+    x: root.currentView === "toggles" ? 0 : root.menuWidth
+    Behavior on x {
+      NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
+    }
+    Wid.QuickTogglesPanel {
+      anchors.fill: parent
+      opacity: root.currentView === "toggles" ? 1.0 : 0.0
+      visible: opacity > 0
+      Behavior on opacity {
+        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+      }
     }
   }
-}
 
   Item {
       id: sysinfoBlob
@@ -293,14 +294,29 @@ Item {
       }
     }
 
+  Item {
+      id: lunarBlob
+      width: root.menuWidth
+      height: parent.height
+      x: root.currentView === "lunar" ? 0 : root.menuWidth
+      Behavior on x {
+          NumberAnimation { duration: 450; easing.type: Easing.InOutCubic }
+      }
+      SideMenuLunar {
+          anchors.fill: parent
+          opacity: root.currentView === "lunar" ? 1.0 : 0.0
+          visible: opacity > 0
+          Behavior on opacity {
+              NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
+          }
+      }
+  }
 
-  // Settings panel
   SideMenuSettings {
     menuWidth: root.menuWidth
     currentView: root.currentView
   }
 
-  // Wi-Fi panel
   SideMenuWifi {
     menuWidth: root.menuWidth
     currentView: root.currentView

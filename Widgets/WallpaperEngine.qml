@@ -107,9 +107,9 @@ WlrLayershell {
 
         Image {
             id: s1_moon
-            source: Qt.resolvedUrl("../Assets/moon.png")
+            source: Qt.resolvedUrl("../Assets/base.png")
             anchors.fill: parent
-            fillMode: Image.PreserveAspectCrop
+            fillMode: Image.PreserveAspectFit
             smooth: true
             mipmap: true
         }
@@ -349,45 +349,13 @@ WlrLayershell {
         onTriggered: s_trail.tick(0.016)
     }
 
-    ShaderEffect {
-        id: s5_final
-        anchors.fill: parent
-        visible: false
-
-        property var  source:          s4_out
-        property var  normalMapSource: img_black
-        property var  trailMap:        s_trail
-        property var  depthMask:       img_moondepth
-        property real time:            0
-        property real rippleStrength:  0.8
-        property real rippleX:         0.5
-        property real rippleY:         0.5
-        property real rippleAge:       999.0
-
-        NumberAnimation on time {
-            from: 0; to: 1000; duration: 100000
-            loops: Animation.Infinite; running: true
-        }
-
-        vertexShader:   Qt.resolvedUrl("../Assets/shaders/waterripple/waterripple.vert.qsb")
-        fragmentShader: Qt.resolvedUrl("../Assets/shaders/waterripple/waterripple.frag.qsb")
-    }
-
-    ShaderEffectSource {
-        id: s5_out
-        sourceItem: s5_final
-        anchors.fill: parent
-        visible: false
-        hideSource: true
-    }
-
     // Stage 5 — Parallax (final visible output)
     ShaderEffect {
         id: s2_parallax
         anchors.fill: parent
         visible: true
 
-        property var  source:           s5_out
+        property var  source:           s4_out
         property real offsetX:          Dat.Globals.mouseOffsetX
         property real offsetY:          Dat.Globals.mouseOffsetY
         property real parallaxStrength: 0.30
