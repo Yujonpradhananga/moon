@@ -1,7 +1,3 @@
-// PanelHeader.qml
-// Shared header used by all side-panel views (toggles, settings, etc.)
-// Shows a back arrow + crescent icon + title + divider line.
-
 import QtQuick
 import QtQuick.Layouts
 import qs.Data as Dat
